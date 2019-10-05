@@ -66,7 +66,7 @@ using Photon.Realtime;
 			{
 
 
-				if (PlayerManagerCar.LocalPlayerInstance == null)
+				if (PlayerManagerCarPhoton.LocalPlayerInstance == null)
 				{
 					Debug.LogFormat("We are Instantiating LocalPlayer from {0}", SceneManagerHelper.ActiveSceneName);
 

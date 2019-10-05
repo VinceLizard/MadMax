@@ -1289,7 +1289,7 @@ ParticleSystem:
         m_RotationOrder: 4
     startSizeY:
       serializedVersion: 2
-      minMaxState: 0
+      minMaxState: 3
       scalar: 1
       minScalar: 1
       maxCurve:
@@ -1342,7 +1342,7 @@ ParticleSystem:
         m_RotationOrder: 4
     startSizeZ:
       serializedVersion: 2
-      minMaxState: 0
+      minMaxState: 3
       scalar: 1
       minScalar: 1
       maxCurve:
@@ -1395,7 +1395,7 @@ ParticleSystem:
         m_RotationOrder: 4
     startRotationX:
       serializedVersion: 2
-      minMaxState: 0
+      minMaxState: 3
       scalar: 0
       minScalar: 0
       maxCurve:
@@ -1448,7 +1448,7 @@ ParticleSystem:
         m_RotationOrder: 4
     startRotationY:
       serializedVersion: 2
-      minMaxState: 0
+      minMaxState: 3
       scalar: 0
       minScalar: 0
       maxCurve:
@@ -6494,12 +6494,12 @@ GameObject:
   - component: {fileID: 400050}
   - component: {fileID: 5400000}
   - component: {fileID: 11400002}
-  - component: {fileID: 11400022}
   - component: {fileID: 11400024}
   - component: {fileID: -7364062509029964725}
   - component: {fileID: 7396591525307819161}
   - component: {fileID: 6680740933912785604}
   - component: {fileID: 2469827571622681255}
+  - component: {fileID: 8164099769270464599}
   m_Layer: 0
   m_Name: Car
   m_TagString: Player
@@ -6584,18 +6584,6 @@ MonoBehaviour:
   m_RevRangeBoundary: 1
   m_SlipLimit: 0.3
   m_BrakeTorque: 20000
---- !u!114 &11400022
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 100042}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 96468c245ae8e0d4f8f1c7a7b8b0542e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &11400024
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6689,6 +6677,18 @@ MonoBehaviour:
   Health: 1
   playerUiPrefab: {fileID: 170056, guid: 0d43061c6efb81b47917603c5d68a5df, type: 3}
   lasers: {fileID: 8838583983587598357}
+--- !u!114 &8164099769270464599
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100042}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95e0e77a58d85a9498cfdc76f01b0c37, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &100044
 GameObject:
   m_ObjectHideFlags: 0

@@ -34,7 +34,7 @@ using UnityEngine.UI;
 	    [SerializeField]
 	    private Slider playerHealthSlider;
 
-        PlayerManagerCar target;
+        PlayerManagerCarPhoton target;
 
 		float characterControllerHeight;
 
@@ -115,7 +115,7 @@ using UnityEngine.UI;
 		/// Assigns a Player Target to Follow and represent.
 		/// </summary>
 		/// <param name="target">Target.</param>
-		public void SetTarget(PlayerManagerCar _target){
+		public void SetTarget(PlayerManagerCarPhoton _target){
 
 			if (_target == null) {
 				Debug.LogError("<Color=Red><b>Missing</b></Color> PlayMakerManager target for PlayerUI.SetTarget.", this);
