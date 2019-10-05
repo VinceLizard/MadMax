@@ -9,17 +9,14 @@ namespace UnityStandardAssets.Vehicles.Car
     {
         public GameObject wheel; // The wheel that the script needs to referencing to get the postion for the suspension
 
-
         private Vector3 m_TargetOriginalPosition;
         private Vector3 m_Origin;
-
 
         private void Start()
         {
             m_TargetOriginalPosition = wheel.transform.localPosition;
             m_Origin = transform.localPosition;
         }
-
 
         private void Update()
         {
