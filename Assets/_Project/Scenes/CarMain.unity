@@ -475,7 +475,7 @@ PrefabInstance:
     - target: {fileID: 11478194, guid: 9d0a0bb9b32c0a34cb5883a01ef85a84, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 1201093747}
     - target: {fileID: 11478194, guid: 9d0a0bb9b32c0a34cb5883a01ef85a84, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
       value: LeaveRoom
