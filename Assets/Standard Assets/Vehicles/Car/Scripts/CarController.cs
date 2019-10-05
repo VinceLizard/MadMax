@@ -55,6 +55,11 @@ namespace UnityStandardAssets.Vehicles.Car
         public float Revs { get; private set; }
         public float AccelInput { get; private set; }
 
+        private void Awake()
+        {
+            m_Rigidbody = GetComponent<Rigidbody>();
+        }
+
         // Use this for initialization
         private void Start()
         {
@@ -67,7 +72,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
             m_MaxHandbrakeTorque = float.MaxValue;
 
-            m_Rigidbody = GetComponent<Rigidbody>();
+            
             m_CurrentTorque = m_FullTorqueOverAllWheels - (m_TractionControl*m_FullTorqueOverAllWheels);
         }
 
