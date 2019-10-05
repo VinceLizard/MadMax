@@ -93,7 +93,7 @@ using Photon.Realtime;
             {
                 Debug.LogError("<Color=Red><b>Missing</b></Color> CameraWork Component on player Prefab.", this);
             }
-            
+            /*
             // Create the UI
             if (this.playerUiPrefab != null)
             {
@@ -104,7 +104,7 @@ using Photon.Realtime;
             {
                 Debug.LogWarning("<Color=Red><b>Missing</b></Color> PlayerUiPrefab reference on player Prefab.", this);
             }
-            
+            */
 
             #if UNITY_5_4_OR_NEWER
             // Unity 5.4 has a new scene management. register a method to call CalledOnLevelWasLoaded.
@@ -277,13 +277,13 @@ using Photon.Realtime;
             {
                 // We own this player: send the others our data
                 stream.SendNext(this.IsFiring);
-                stream.SendNext(this.Health);
+                //stream.SendNext(this.Health);
             }
             else
             {
                 // Network player, receive data
                 this.IsFiring = (bool)stream.ReceiveNext();
-                this.Health = (float)stream.ReceiveNext();
+                //this.Health = (float)stream.ReceiveNext();
             }
         }
         
