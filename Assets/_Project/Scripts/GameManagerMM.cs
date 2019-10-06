@@ -237,10 +237,6 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 		#endregion
     */
 
-    private void OnApplicationQuit()
-    {
-        SceneManager.UnloadSceneAsync("CarLauncher");
-    }
 }
 
 
