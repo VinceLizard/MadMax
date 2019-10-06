@@ -29,14 +29,15 @@ public class CarGameUi : MonoBehaviour
 	private void Start()
 	{
 		StartCoroutine(UpdateLeaderboard());
+        Debug.Log("Setting instruction text");
 		instructionText.text = string.Format("The Monolith Requests {0} Blocks!", GameManagerMM.Instance.RequiredToDepot);
 	}
 
 	IEnumerator UpdateLeaderboard()
     {
         while(true)
-		{
-			cars.Clear();
+		{          
+            cars.Clear();
 			var gos = GameObject.FindGameObjectsWithTag("Player");
 			foreach(var go in gos)
 			{

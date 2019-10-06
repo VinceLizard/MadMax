@@ -192,7 +192,7 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 	/// </summary>
 	public override void OnLeftRoom()
 	{
-		SceneManager.LoadScene("CarLauncher");
+            SceneManager.LoadScene("CarLauncher");
 	}
 
 	#endregion
@@ -219,7 +219,7 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 
 		Gizmos.DrawWireSphere(this.transform.position, JunkSpawnRadius);
 	}
-	/*
+    /*
 		#region Private Methods
 
 		void LoadArena()
@@ -236,6 +236,11 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 
 		#endregion
     */
+
+    private void OnApplicationQuit()
+    {
+        SceneManager.UnloadSceneAsync("CarLauncher");
+    }
 }
 
 

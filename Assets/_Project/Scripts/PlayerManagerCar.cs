@@ -69,11 +69,8 @@ public class PlayerManagerCar : MonoBehaviour
     public void Start() {
         CameraWorkCar _cameraWork = gameObject.GetComponent<CameraWorkCar>();
 
-
-                _cameraWork.OnStartFollowing();
+         _cameraWork.OnStartFollowing();
             
-
-
         // Create the UI
         if (this.playerUiPrefab != null) {
             GameObject _uiGo = Instantiate(this.playerUiPrefab);

@@ -499,6 +499,21 @@ namespace HoudiniEngineUnity
 		}
 
 		/// <summary>
+		/// Returns true if given part in geometry has the given attribute with name.
+		/// </summary>
+		/// <param name="session">Houdini Engine session</param>
+		/// <param name="geoID">Geometry object ID</param>
+		/// <param name="partID">Part ID</param>
+		/// <param name="attribName">Name of the attribute</param>
+		/// <returns>True if attribute exists</returns>
+		public static bool HasValidInstanceAttribute(HEU_SessionBase session, HAPI_NodeId geoID, HAPI_PartId partID, string attribName)
+		{
+			HAPI_AttributeInfo instanceAttrInfo = new HAPI_AttributeInfo();
+			GetAttributeInfo(session, geoID, partID, attribName, ref instanceAttrInfo);
+			return (instanceAttrInfo.exists && instanceAttrInfo.count > 0);
+		}
+
+		/// <summary>
 		/// Copy the world transform values from src to dest.
 		/// </summary>
 		/// <param name="src"></param>
@@ -735,6 +750,14 @@ namespace HoudiniEngineUnity
 			DestroyComponent<Collider>(gameObject);
 			DestroyComponent<TerrainCollider>(gameObject);
 			DestroyComponent<Terrain>(gameObject);
+			DestroyComponent<LODGroup>(gameObject);
+		}
+
+		public static void DestroyGeneratedMeshComponents(GameObject gameObject)
+		{
+			DestroyComponent<MeshFilter>(gameObject);
+			DestroyComponent<MeshRenderer>(gameObject);
+			DestroyComponent<Collider>(gameObject);
 			DestroyComponent<LODGroup>(gameObject);
 		}
 		
@@ -1205,17 +1228,168 @@ namespace HoudiniEngineUnity
 			HEU_GeneralUtility.GetAttribute(session, geoID, partID, HEU_PluginSettings.UnityScriptAttributeName, ref scriptAttributeInfo, ref scriptAttr, session.GetAttributeStringData);
 			if (scriptAttributeInfo.exists)
 			{
-				if (scriptAttributeInfo.owner != HAPI_AttributeOwner.HAPI_ATTROWNER_DETAIL)
-				{
-					Debug.LogWarningFormat("Houdini Engine for Unity only supports {0} as detail attributes!", HEU_PluginSettings.UnityScriptAttributeName);
-				}
-				else if (scriptAttr.Length > 0)
+				if (scriptAttr.Length > 0)
 				{
 					scriptString = HEU_SessionManager.GetString(scriptAttr[0]);
 				}
 			}
 
 			return scriptString;
+		}
+
+		/// <summary>
+		/// Returns the single string value from Attribute with given name and owner type, or null if failed.
+		/// </summary>
+		/// <param name="session">Houdini Engine session to query</param>
+		/// <param name="geoID">The geometry ID in Houdini</param>
+		/// <param name="partID">The part ID in Houdini</param>
+		/// <param name="attrName">Name of the attribute to query</param>
+		/// <param name="attrOwner">Owner type of the attribute</param>
+		/// <returns>Valid string if successful, otherwise returns null</returns>
+		public static string GetAttributeStringValueSingle(HEU_SessionBase session, HAPI_NodeId geoID, HAPI_PartId partID, string attrName, HAPI_AttributeOwner attrOwner)
+		{
+			if (string.IsNullOrEmpty(attrName))
+			{
+				return null;
+			}
+
+			HAPI_AttributeInfo attrInfo = new HAPI_AttributeInfo();
+			int[] stringHandle = new int[0];
+			HEU_GeneralUtility.GetAttribute(session, geoID, partID, attrName, ref attrInfo, ref stringHandle, session.GetAttributeStringData);
+			if (attrInfo.exists)
+			{
+				if (attrInfo.owner != attrOwner)
+				{
+					Debug.LogWarningFormat("Expected {0} attribute owner for attribute {1} but got {2}!", attrOwner, attrName, attrInfo.owner);
+				}
+				else if (stringHandle.Length > 0)
+				{
+					return HEU_SessionManager.GetString(stringHandle[0]);
+				}
+			}
+			return null;
+		}
+
+		/// <summary>
+		/// Helper to get a single float value for the Attribute with given name, or 0 if none found.
+		/// Returns true if successful, otherwise false.
+		/// </summary>
+		/// <param name="session">Houdini Engine session to query</param>
+		/// <param name="geoID">The geometry ID in Houdini</param>
+		/// <param name="partID">The part ID in Houdini</param>
+		/// <param name="attrName">Name of the attribute to query</param>
+		/// <param name="value">Float attribute value</param>
+		/// <returns>True if successfully found and acquired value, otherwise false</returns>
+		public static bool GetAttributeFloatSingle(HEU_SessionBase session, HAPI_NodeId geoID, HAPI_PartId partID, 
+			string attrName, out float value)
+		{
+			value = 0;
+			bool bResult = false;
+
+			if (!string.IsNullOrEmpty(attrName))
+			{
+				HAPI_AttributeInfo attrInfo = new HAPI_AttributeInfo();
+				float[] values = new float[0];
+				HEU_GeneralUtility.GetAttribute(session, geoID, partID, attrName, ref attrInfo,
+					ref values, session.GetAttributeFloatData);
+				if (attrInfo.exists && values.Length > 0)
+				{
+					value = values[0];
+					bResult = true;
+				}
+			}
+			return bResult;
+		}
+
+		/// <summary>
+		/// Helper to get a single int value for the Attribute with given name, or 0 if none found.
+		/// Returns true if successful, otherwise false.
+		/// </summary>
+		/// <param name="session">Houdini Engine session to query</param>
+		/// <param name="geoID">The geometry ID in Houdini</param>
+		/// <param name="partID">The part ID in Houdini</param>
+		/// <param name="attrName">Name of the attribute to query</param>
+		/// <param name="value">Int attribute value</param>
+		/// <returns>True if successfully found and acquired value, otherwise false</returns>
+		public static bool GetAttributeIntSingle(HEU_SessionBase session, HAPI_NodeId geoID, HAPI_PartId partID,
+			string attrName, out int value)
+		{
+			value = 0;
+			bool bResult = false;
+
+			if (!string.IsNullOrEmpty(attrName))
+			{
+				HAPI_AttributeInfo attrInfo = new HAPI_AttributeInfo();
+				int[] values = new int[0];
+				HEU_GeneralUtility.GetAttribute(session, geoID, partID, attrName, ref attrInfo,
+					ref values, session.GetAttributeIntData);
+				if (attrInfo.exists && values.Length > 0)
+				{
+					value = values[0];
+					bResult = true;
+				}
+			}
+			return bResult;
+		}
+
+		/// <summary>
+		/// Helper to get a single color value for the Attribute with given name, or 0 if none found.
+		/// Returns true if successful, otherwise false.
+		/// </summary>
+		/// <param name="session">Houdini Engine session to query</param>
+		/// <param name="geoID">The geometry ID in Houdini</param>
+		/// <param name="partID">The part ID in Houdini</param>
+		/// <param name="attrName">Name of the attribute to query</param>
+		/// <param name="value">Color attribute value</param>
+		/// <returns>True if successfully found and acquired value, otherwise false</returns>
+		public static bool GetAttributeColorSingle(HEU_SessionBase session, HAPI_NodeId geoID, HAPI_PartId partID,
+			string attrName, ref Color value)
+		{
+			bool bResult = false;
+
+			if (!string.IsNullOrEmpty(attrName))
+			{
+				HAPI_AttributeInfo attrInfo = new HAPI_AttributeInfo();
+				float[] values = new float[0];
+				HEU_GeneralUtility.GetAttribute(session, geoID, partID, attrName, ref attrInfo,
+					ref values, session.GetAttributeFloatData);
+				if (attrInfo.exists && values.Length >= 3)
+				{
+					value = new Color();
+					value.r = Mathf.Clamp01(values[0]);
+					value.g = Mathf.Clamp01(values[1]);
+					value.b = Mathf.Clamp01(values[2]);
+
+					if (values.Length >= 4)
+					{
+						value.a = Mathf.Clamp01(values[3]);
+					}
+
+					bResult = true;
+				}
+			}
+			return bResult;
+		}
+
+		/// <summary>
+		/// Returns true if specified geometry and part has the given atttribute name.
+		/// </summary>
+		/// <param name="session">Houdini session to check</param>
+		/// <param name="geoID">Geometry object ID</param>
+		/// <param name="partID">Part ID</param>
+		/// <param name="attrName">The name of the attribute to check</param>
+		/// <param name="attrOwner">The owner type for the attribute</param>
+		/// <returns></returns>
+		public static bool HasAttribute(HEU_SessionBase session, HAPI_NodeId geoID, HAPI_PartId partID, string attrName, HAPI_AttributeOwner attrOwner)
+		{
+			if (string.IsNullOrEmpty(attrName))
+			{
+				return false;
+			}
+
+			HAPI_AttributeInfo attrInfo = new HAPI_AttributeInfo();
+			bool bResult = session.GetAttributeInfo(geoID, partID, attrName, attrOwner, ref attrInfo);
+			return (bResult && attrInfo.exists);
 		}
 
 		/// <summary>
@@ -1242,16 +1416,25 @@ namespace HoudiniEngineUnity
 					return;
 				}
 
-				Component component = gameObject.GetComponent(scriptType);
-				if (component == null)
+				Component component = null;
+				try
 				{
-					Debug.LogFormat("Attaching script {0} to gameobject", scriptType);
-					component = gameObject.AddComponent(scriptType);
+					component = gameObject.GetComponent(scriptType);
 					if (component == null)
 					{
-						Debug.LogFormat("Unable to attach script component with type '{0}' from script attribute: {1}", scriptType.ToString(), scriptToAttach);
-						return;
+						Debug.LogFormat("Attaching script {0} to gameobject", scriptType);
+						component = gameObject.AddComponent(scriptType);
+						if (component == null)
+						{
+							Debug.LogFormat("Unable to attach script component with type '{0}' from script attribute: {1}", scriptType.ToString(), scriptToAttach);
+							return;
+						}
 					}
+				}
+				catch(System.ArgumentException ex)
+				{
+					Debug.LogWarningFormat("Specified unity_script '{0}' does not derive from MonoBehaviour. Unable to attach script.\n{1}", scriptTypeName, ex.ToString());
+					return;
 				}
 
 				if (scriptColon + 1 >= scriptToAttach.Length)
@@ -1260,12 +1443,13 @@ namespace HoudiniEngineUnity
 					return;
 				}
 
+				int functionNameLength = 0;
 				int functionColon = scriptToAttach.IndexOf(":", scriptColon + 1);
-				int functionNameLength = functionColon - (scriptColon + 1);
+				functionNameLength = (functionColon > 0) ? functionColon - (scriptColon + 1) : scriptToAttach.Length - (scriptColon + 1);
+
 				if (functionNameLength > 0)
 				{
 					string scriptFunction = scriptToAttach.Substring(scriptColon + 1, functionNameLength).Trim();
-
 					if (functionColon + 1 < scriptToAttach.Length)
 					{
 						// Get argument
@@ -1459,6 +1643,43 @@ namespace HoudiniEngineUnity
 			childTransform.localPosition = Vector3.zero;
 			childTransform.localRotation = Quaternion.identity;
 			childTransform.localScale = Vector3.one;
+		}
+
+		/// <summary>
+		/// Copy src HAPI_Transfrom to dest HAPI_Transform.
+		/// </summary>
+		public static void CopyHAPITransform(ref HAPI_Transform src, ref HAPI_Transform dest)
+		{
+			src.position.CopyToWithResize<float>(ref dest.position);
+			src.rotationQuaternion.CopyToWithResize<float>(ref dest.rotationQuaternion);
+			src.scale.CopyToWithResize<float>(ref dest.scale);
+			src.shear.CopyToWithResize<float>(ref dest.shear);
+
+			dest.rstOrder = src.rstOrder;
+		}
+
+		/// <summary>
+		/// Get the assigned material via string attribute from the given part.
+		/// </summary>
+		public static string GetMaterialAttributeValueFromPart(HEU_SessionBase session, HAPI_NodeId geoID, HAPI_PartId partID)
+		{
+			string materialName = null;
+			HAPI_AttributeInfo unityMaterialAttrInfo = new HAPI_AttributeInfo();
+			HAPI_StringHandle[] unityMaterialAttrName = new HAPI_StringHandle[0];
+			HEU_GeneralUtility.GetAttribute(session, geoID, partID, HEU_PluginSettings.UnityMaterialAttribName,
+				ref unityMaterialAttrInfo, ref unityMaterialAttrName, session.GetAttributeStringData);
+
+			if (unityMaterialAttrInfo.exists && unityMaterialAttrName.Length > 0)
+			{
+				materialName = HEU_SessionManager.GetString(unityMaterialAttrName[0], session);
+				if (string.IsNullOrEmpty(materialName))
+				{
+					// Warn user of empty string, but add it anyway to our map so we don't keep trying to parse it
+					Debug.LogWarningFormat("Found empty material attribute value for terrain heightfield part.");
+				}
+			}
+
+			return materialName;
 		}
 	}
 
