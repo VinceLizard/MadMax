@@ -6,13 +6,20 @@ using Photon.Realtime;
 
 public class CarJunk : MonoBehaviour
 {
-	public GameObject model;
+    private static float JUNK_EJECTION_POWER = 10;
+    public GameObject model;
 	public float scaleSpeed = 1.0f;
 	public float scaleAmount;
 	public bool IsCollected { get; set; }
 
+    private Rigidbody rb;
 
-	private void Update()
+    private void Awake()
+    {
+        rb = gameObject.GetComponent<Rigidbody>();
+        EjectJunk();
+    }
+    private void Update()
 	{
 		model.transform.localScale = Vector3.one * (1f + (scaleAmount * Mathf.Abs(Mathf.Sin(Time.time * scaleSpeed))));
 	}
@@ -40,6 +47,13 @@ public class CarJunk : MonoBehaviour
 	{
 		PhotonNetwork.Destroy(this.gameObject);
 	}
+
+    public void EjectJunk()
+    {
+        var x = Random.Range(-1, 1);
+        var z = Random.Range(-1, 1);
+        this.rb.AddForce(new Vector3(x, 1, z) * JUNK_EJECTION_POWER, ForceMode.Impulse);
+    }
 
 	void OnTriggerEnter(Collider collider)
 	{
