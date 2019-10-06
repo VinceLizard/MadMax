@@ -13,6 +13,7 @@ using UnityEngine.SceneManagement;
 using Photon.Pun;
 using Photon.Realtime;
 using System.Collections;
+using System.Collections.Generic;
 
 #pragma warning disable 649
 
@@ -29,6 +30,7 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 
 	static public GameManagerMM Instance;
 
+	public List<Transform> SpawnPoints;
 	#endregion
 
 	#region Private Fields
@@ -36,8 +38,12 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 	private GameObject instance;
 
 	[Tooltip("The prefab to use for representing the player")]
+
 	[SerializeField]
 	private GameObject playerPrefab;
+
+	[SerializeField]
+	public int RequiredToDepot = 10;
 
 	#endregion
 
@@ -71,8 +77,26 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 			{
 				Debug.LogFormat("We are Instantiating LocalPlayer from {0}", SceneManagerHelper.ActiveSceneName);
 
+
+				Transform spawn = null;
+				int offsetSpawn = Random.Range(0, SpawnPoints.Count);
+				for (int i=0;  i< SpawnPoints.Count; i++)
+				{
+					var sp = this.SpawnPoints[(i + offsetSpawn) % SpawnPoints.Count];
+					var ray = new Ray(sp.transform.position + new Vector3(0, 100, 0), Vector3.down);
+					if( Physics.SphereCast(ray, 5.0f, 1000.0f, LayerMask.GetMask(new string[1] { "Cars" })) )
+					{
+						spawn = sp;
+					}
+				}
+
+				if(spawn == null)
+				{
+					spawn = SpawnPoints[offsetSpawn];
+				}
+				
 				// we're in a room. spawn a character for the local player. it gets synced by using PhotonNetwork.Instantiate
-				PhotonNetwork.Instantiate(this.playerPrefab.name, new Vector3(0f, 5f, 0f), Quaternion.identity, 0);
+				PhotonNetwork.Instantiate(this.playerPrefab.name, spawn.position, spawn.rotation, 0);
 			}
 			else
 			{
@@ -175,6 +199,13 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 	}
 
 	#endregion
+
+	private void OnDrawGizmos()
+	{
+		Gizmos.color = Color.red;
+		foreach (var sp in SpawnPoints)
+			Gizmos.DrawWireSphere(sp.transform.position, 1.0f);
+	}
 	/*
 		#region Private Methods
 

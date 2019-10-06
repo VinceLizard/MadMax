@@ -221,7 +221,7 @@ GameObject:
   - component: {fileID: 3300018}
   - component: {fileID: 6500000}
   - component: {fileID: 2300018}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: ColliderFront
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -313,7 +313,7 @@ GameObject:
   - component: {fileID: 3300026}
   - component: {fileID: 6500002}
   - component: {fileID: 2300026}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: ColliderBody
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -483,7 +483,7 @@ GameObject:
   - component: {fileID: 3300030}
   - component: {fileID: 6500004}
   - component: {fileID: 2300030}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: ColliderBottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5661,7 +5661,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 400038}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Colliders
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6515,7 +6515,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 100042}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5.616204, y: 0, z: 254.71234}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 400038}
@@ -6575,15 +6575,15 @@ MonoBehaviour:
   m_MaximumSteerAngle: 25
   m_SteerHelper: 0.644
   m_TractionControl: 1
-  m_FullTorqueOverAllWheels: 100000
-  m_ReverseTorque: 20000
+  m_FullTorqueOverAllWheels: 2500
+  m_ReverseTorque: 500
   m_MaxHandbrakeTorque: 100000000
-  m_Downforce: 1000
+  m_Downforce: 100
   m_SpeedType: 0
   m_Topspeed: 150
   m_RevRangeBoundary: 1
-  m_SlipLimit: 0.5
-  m_BrakeTorque: 800000
+  m_SlipLimit: 0.3
+  m_BrakeTorque: 20000
 --- !u!114 &11400024
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6624,10 +6624,11 @@ MonoBehaviour:
   ObservedComponentsFoldoutOpen: 1
   Group: 0
   prefixField: -1
-  Synchronization: 3
+  Synchronization: 1
   OwnershipTransfer: 0
   ObservedComponents:
   - {fileID: 7396591525307819161}
+  - {fileID: 2469827571622681255}
   viewIdField: 0
   InstantiationId: 0
   isRuntimeInstantiated: 0
@@ -6677,7 +6678,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Health: 1
   Junk: 0
-  TotalJunkStored: 0
+  IsWinner: 0
   CarUiRenderer: {fileID: 2300000}
   playerUiPrefab: {fileID: 170056, guid: 0d43061c6efb81b47917603c5d68a5df, type: 3}
   lasers: {fileID: 8838583983587598357}

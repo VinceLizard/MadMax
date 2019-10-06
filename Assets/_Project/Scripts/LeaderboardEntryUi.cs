@@ -19,7 +19,7 @@ public class LeaderboardEntryUi : MonoBehaviour
 		{
 			this.gameObject.SetActive(true);
 			this.nameText.text = car.photonView.Owner.NickName;
-			this.scoreText.text = car.TotalJunkStored.ToString();
+			this.scoreText.text = car.Junk.ToString();
 		}
 	}
 }
