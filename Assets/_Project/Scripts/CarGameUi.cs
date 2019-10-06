@@ -2,18 +2,21 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using UnityEngine.UI;
 
 public class CarGameUi : MonoBehaviour
 {
 	[SerializeField] GameObject leaderboardAnchor;
 	[SerializeField] LeaderboardEntryUi leaderboardPrefab;
 	[SerializeField] int NumberOfEntries = 5;
+	[SerializeField] Text winnerText;
 
 	List<LeaderboardEntryUi> leaderboardEntries = new List<LeaderboardEntryUi>();
 	List<PlayerManagerCarPhoton> cars = new List<PlayerManagerCarPhoton>();
 
 	private void Awake()
 	{
+		winnerText.gameObject.SetActive(false);
 		leaderboardEntries.Clear();
 		for (int i = 0; i < NumberOfEntries; i++)
 		{
@@ -40,11 +43,21 @@ public class CarGameUi : MonoBehaviour
 					cars.Add(car);
 			}
 
-			cars.Sort((a, b) => a.TotalJunkStored.CompareTo(b.TotalJunkStored));
-
-			for (int i = 0; i < leaderboardEntries.Count; i++)
+			var winner = cars.Find((c) => c.IsWinner);
+			if (winner)
 			{
-				leaderboardEntries[i].UpdateWithCar(cars.Count > i ? cars[i] : null);
+				leaderboardAnchor.SetActive(false);
+				winnerText.gameObject.SetActive(true);
+				winnerText.text = winner.photonView.Owner.NickName + " Wins!!!";
+				break;
+			}
+			else
+			{
+				leaderboardAnchor.SetActive(true);
+				for (int i = 0; i < leaderboardEntries.Count; i++)
+				{
+					leaderboardEntries[i].UpdateWithCar(cars.Count > i ? cars[i] : null);
+				}
 			}
 			yield return new WaitForSeconds(2.0f);
 		}

@@ -33,7 +33,7 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 	public int Junk = 0;
 
 	[Tooltip("The total junk stored")]
-	public int TotalJunkStored = 0;
+	public bool IsWinner = false;
 
 	public Renderer CarUiRenderer;
 	#endregion
@@ -188,8 +188,10 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 		var depot = other.GetComponentInParent<CarJunkDepot>();
 		if(depot != null)
 		{
-			this.TotalJunkStored += this.Junk;
-			this.Junk = 0;
+			if (GameManagerMM.Instance.RequiredToDepot <= this.Junk)
+			{
+				this.IsWinner = true;
+			}
 		}
 
 		// We are only interested in Beamers
@@ -306,7 +308,7 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 			stream.SendNext(this.IsFiring);
 			stream.SendNext(this.Health);
 			stream.SendNext(this.Junk);
-			stream.SendNext(this.TotalJunkStored);
+			stream.SendNext(this.IsWinner);
 		}
 		else
 		{
@@ -314,7 +316,7 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 			this.IsFiring = (bool)stream.ReceiveNext();
 			this.Health = (float)stream.ReceiveNext();
 			this.Junk = (int)stream.ReceiveNext();
-			this.TotalJunkStored = (int)stream.ReceiveNext();
+			this.IsWinner = (bool)stream.ReceiveNext();
 		}
 	}
 
