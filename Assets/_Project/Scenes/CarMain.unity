@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
   m_LightingDataAsset: {fileID: 0}
-  m_UseShadowmask: 1
+  m_UseShadowmask: 0
 --- !u!196 &4
 NavMeshSettings:
   serializedVersion: 2
@@ -403,6 +403,16 @@ PrefabInstance:
       propertyPath: m_LocalScale.z
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: -1504981713932161579, guid: 9657a86ec16b4534da9268690264ea12,
+        type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: e9a954efae88a72439d0f6f0743af01a, type: 2}
+    - target: {fileID: -1504981713932161579, guid: 9657a86ec16b4534da9268690264ea12,
+        type: 3}
+      propertyPath: m_Materials.Array.data[1]
+      value: 
+      objectReference: {fileID: 2100000, guid: 6ab0daeaa91255e4692553878e630125, type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9657a86ec16b4534da9268690264ea12, type: 3}
 --- !u!1 &1004403791
@@ -647,6 +657,9 @@ MonoBehaviour:
   - {fileID: 1480354362}
   - {fileID: 442727997}
   playerPrefab: {fileID: 100042, guid: 0e7ee4df08df88c4880f43398f9ad2c2, type: 3}
+  music: {fileID: 8300000, guid: 808cc3e748e6e43e381a2133b8475bb8, type: 3}
+  intenseMusic: {fileID: 8300000, guid: 74eb581d859a84d8d84ffe92ee22504d, type: 3}
+  loseMusic: {fileID: 8300000, guid: c1fa7b2f2ac0d41f1a4fb1565cdc8229, type: 3}
   RequiredToDepot: 10
   JunkSpawnRadius: 850
   NumberOfJunkSpawns: 50
