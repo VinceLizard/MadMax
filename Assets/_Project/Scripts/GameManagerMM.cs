@@ -12,94 +12,114 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Photon.Pun;
 using Photon.Realtime;
+using System.Collections;
 
 #pragma warning disable 649
 
+/// <summary>
+/// Game manager.
+/// Connects and watch Photon Status, Instantiate Player
+/// Deals with quiting the room and the game
+/// Deals with level loading (outside the in room synchronization)
+/// </summary>
+public class GameManagerMM : MonoBehaviourPunCallbacks
+{
+
+	#region Public Fields
+
+	static public GameManagerMM Instance;
+
+	#endregion
+
+	#region Private Fields
+
+	private GameObject instance;
+
+	[Tooltip("The prefab to use for representing the player")]
+	[SerializeField]
+	private GameObject playerPrefab;
+
+	#endregion
+
+	#region MonoBehaviour CallBacks
+
 	/// <summary>
-	/// Game manager.
-	/// Connects and watch Photon Status, Instantiate Player
-	/// Deals with quiting the room and the game
-	/// Deals with level loading (outside the in room synchronization)
+	/// MonoBehaviour method called on GameObject by Unity during initialization phase.
 	/// </summary>
-	public class GameManagerMM : MonoBehaviourPunCallbacks
+	void Start()
 	{
+		Instance = this;
 
-		#region Public Fields
-
-		static public GameManagerMM Instance;
-
-		#endregion
-
-		#region Private Fields
-
-		private GameObject instance;
-
-		[Tooltip("The prefab to use for representing the player")]
-		[SerializeField]
-		private GameObject playerPrefab;
-
-		#endregion
-
-		#region MonoBehaviour CallBacks
-
-		/// <summary>
-		/// MonoBehaviour method called on GameObject by Unity during initialization phase.
-		/// </summary>
-		void Start()
+		// in case we started this demo with the wrong scene being active, simply load the menu scene
+		if (!PhotonNetwork.IsConnected)
 		{
-			Instance = this;
+			SceneManager.LoadScene("CarLauncher");
 
-			// in case we started this demo with the wrong scene being active, simply load the menu scene
-			if (!PhotonNetwork.IsConnected)
+			return;
+		}
+
+		if (playerPrefab == null)
+		{ // #Tip Never assume public properties of Components are filled up properly, always check and inform the developer of it.
+
+			Debug.LogError("<Color=Red><b>Missing</b></Color> playerPrefab Reference. Please set it up in GameObject 'Game Manager'", this);
+		}
+		else
+		{
+
+
+			if (PlayerManagerCarPhoton.LocalPlayerInstance == null)
 			{
-				SceneManager.LoadScene("CarLauncher");
+				Debug.LogFormat("We are Instantiating LocalPlayer from {0}", SceneManagerHelper.ActiveSceneName);
 
-				return;
-			}
-
-			if (playerPrefab == null)
-			{ // #Tip Never assume public properties of Components are filled up properly, always check and inform the developer of it.
-
-				Debug.LogError("<Color=Red><b>Missing</b></Color> playerPrefab Reference. Please set it up in GameObject 'Game Manager'", this);
+				// we're in a room. spawn a character for the local player. it gets synced by using PhotonNetwork.Instantiate
+				PhotonNetwork.Instantiate(this.playerPrefab.name, new Vector3(0f, 5f, 0f), Quaternion.identity, 0);
 			}
 			else
 			{
 
-
-				if (PlayerManagerCarPhoton.LocalPlayerInstance == null)
-				{
-					Debug.LogFormat("We are Instantiating LocalPlayer from {0}", SceneManagerHelper.ActiveSceneName);
-
-					// we're in a room. spawn a character for the local player. it gets synced by using PhotonNetwork.Instantiate
-					PhotonNetwork.Instantiate(this.playerPrefab.name, new Vector3(0f, 5f, 0f), Quaternion.identity, 0);
-				}
-				else
-				{
-
-					Debug.LogFormat("Ignoring scene load for {0}", SceneManagerHelper.ActiveSceneName);
-				}
-
-
+				Debug.LogFormat("Ignoring scene load for {0}", SceneManagerHelper.ActiveSceneName);
 			}
+
 
 		}
 
-		/// <summary>
-		/// MonoBehaviour method called on GameObject by Unity on every frame.
-		/// </summary>
-		void Update()
+		StartCoroutine(SpawnCoro());
+	}
+
+	/// <summary>
+	/// MonoBehaviour method called on GameObject by Unity on every frame.
+	/// </summary>
+	void Update()
+	{
+		// "back" button of phone equals "Escape". quit app if that's pressed
+		if (Input.GetKeyDown(KeyCode.Escape))
 		{
-			// "back" button of phone equals "Escape". quit app if that's pressed
-			if (Input.GetKeyDown(KeyCode.Escape))
-			{
-				QuitApplication();
-			}
+			QuitApplication();
 		}
+	}
 
-		#endregion
+	IEnumerator SpawnCoro()
+	{
+		while (true)
+		{
+			if (PhotonNetwork.IsMasterClient)
+			{
+				var gos = GameObject.FindGameObjectsWithTag("Junk");
+				if (gos.Length < 5)
+				{
+					var v = Random.onUnitSphere * 10.0f;
+					v.y = 0.0f;
+					PhotonNetwork.InstantiateSceneObject("Junk", v , Quaternion.identity, 0);
+				}
+			}
+			yield return new WaitForSeconds(5.0f);
+		}
+	}
 
-		#region Photon Callbacks
-    /*
+	#endregion
+
+	#region Photon Callbacks
+	/*
 		/// <summary>
 		/// Called when a Photon Player got connected. We need to then load a bigger scene.
 		/// </summary>
@@ -132,30 +152,30 @@ using Photon.Realtime;
 			}
 		}
         */
-		/// <summary>
-		/// Called when the local player left the room. We need to load the launcher scene.
-		/// </summary>
-		public override void OnLeftRoom()
-		{
-			SceneManager.LoadScene("CarLauncher");
-		}
+	/// <summary>
+	/// Called when the local player left the room. We need to load the launcher scene.
+	/// </summary>
+	public override void OnLeftRoom()
+	{
+		SceneManager.LoadScene("CarLauncher");
+	}
 
-		#endregion
+	#endregion
 
-		#region Public Methods
+	#region Public Methods
 
-		public void LeaveRoom()
-		{
-			PhotonNetwork.LeaveRoom();
-		}
+	public void LeaveRoom()
+	{
+		PhotonNetwork.LeaveRoom();
+	}
 
-		public void QuitApplication()
-		{
-			Application.Quit();
-		}
+	public void QuitApplication()
+	{
+		Application.Quit();
+	}
 
-		#endregion
-    /*
+	#endregion
+	/*
 		#region Private Methods
 
 		void LoadArena()
@@ -172,7 +192,7 @@ using Photon.Realtime;
 
 		#endregion
     */
-	}
+}
 
 
 
