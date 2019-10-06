@@ -25,10 +25,12 @@ using System.Collections.Generic;
 /// </summary>
 public class GameManagerMM : MonoBehaviourPunCallbacks
 {
+    const int MAX_NUM_TO_SPAWN_PER_SECOND = 5;
+    const float COOLDOWN = 1.0f;
 
-	#region Public Fields
+    #region Public Fields
 
-	static public GameManagerMM Instance;
+    static public GameManagerMM Instance;
 
 	public List<Transform> SpawnPoints;
 	#endregion
@@ -43,8 +45,8 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 	private GameObject playerPrefab;
 
 	public int RequiredToDepot = 10;
-	public float JunkSpawnRadius = .01f;
-	public int NumberOfJunkSpawns = 50;
+	public float JunkSpawnRadius = 1f;
+	public int NumberOfJunkSpawns = 500;
 	#endregion
 
 	#region MonoBehaviour CallBacks
@@ -124,8 +126,7 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
     IEnumerator SpawnCoro()
 	{
         
-		const int MAX_NUM_TO_SPAWN_PER_SECOND = 5;
-		const float COOLDOWN = 15.0f;
+
 		while (true)
 		{
 			if (PhotonNetwork.IsMasterClient)

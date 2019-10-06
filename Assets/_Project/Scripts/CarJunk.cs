@@ -7,6 +7,7 @@ using Photon.Realtime;
 public class CarJunk : MonoBehaviour
 {
     private static float JUNK_EJECTION_POWER = 10;
+    
     public GameObject model;
 	public float scaleSpeed = 1.0f;
 	public float scaleAmount;
@@ -18,16 +19,33 @@ public class CarJunk : MonoBehaviour
     {
         rb = gameObject.GetComponent<Rigidbody>();
         EjectJunk();
+        
     }
-    private void Update()
-	{
-		model.transform.localScale = Vector3.one * (1f + (scaleAmount * Mathf.Abs(Mathf.Sin(Time.time * scaleSpeed))));
-	}
 
-	void OnEnable()
-	{
-		IsCollected = false;
-	}
+    void OnEnable()
+    {
+        IsCollected = false;
+        StartCoroutine("Pulsate");
+    }
+
+    private void OnDisable()
+    {
+        StopCoroutine("Pulsate");
+        model.transform.localScale = Vector3.one;
+    }
+    IEnumerator Pulsate()
+    {
+        while(rb.velocity.magnitude >= .01f)
+        {
+            yield return null;
+        }
+
+        while(true)
+        {
+            model.transform.localScale = Vector3.one * (1f + (scaleAmount * Mathf.Abs(Mathf.Sin(Time.time * scaleSpeed))));
+            yield return null;
+        }
+    }
 
 	public void Collect()
 	{
@@ -50,9 +68,10 @@ public class CarJunk : MonoBehaviour
 
     public void EjectJunk()
     {
-        var x = Random.Range(-1, 1);
-        var z = Random.Range(-1, 1);
-        this.rb.AddForce(new Vector3(x, 1, z) * JUNK_EJECTION_POWER, ForceMode.Impulse);
+        var x = Random.Range(2, 3);
+        var z = Random.Range(2, 3);
+        Vector3 dir = new Vector3(x, 1, z).normalized;
+        this.rb.AddForce(dir * JUNK_EJECTION_POWER, ForceMode.Impulse);
     }
 
 	void OnTriggerEnter(Collider collider)
