@@ -70,10 +70,12 @@ namespace UnityStandardAssets.Vehicles.Car
                 m_HighDecel = SetUpEngineAudioSource(highDecelClip);                
             }
 
+            //Setup gravel audiosource
             if (gravelClip != null)
             {
                 gravelAudioSource = gameObject.AddComponent<AudioSource>();
                 gravelAudioSource.clip = gravelClip;
+                gravelAudioSource.volume = .2f;
                 gravelAudioSource.loop = true;
                 gravelAudioSource.minDistance = 5;
                 gravelAudioSource.maxDistance = maxRolloffDistance;
