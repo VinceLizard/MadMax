@@ -43,7 +43,7 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 	private GameObject playerPrefab;
 
 	public int RequiredToDepot = 10;
-	public float JunkSpawnRadius = 50.0f;
+	public float JunkSpawnRadius = .01f;
 	public int NumberOfJunkSpawns = 50;
 	#endregion
 
@@ -120,8 +120,10 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 		}
 	}
 
-	IEnumerator SpawnCoro()
+    // Spawn junk
+    IEnumerator SpawnCoro()
 	{
+        
 		const int MAX_NUM_TO_SPAWN_PER_SECOND = 5;
 		const float COOLDOWN = 15.0f;
 		while (true)
@@ -141,7 +143,7 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 						RaycastHit hit;
 						if (Physics.Raycast(ray, out hit, 2000.0f, LayerMask.GetMask(new string[1] { "Terrain" })))
 						{
-							PhotonNetwork.InstantiateSceneObject("Junk", hit.point, Quaternion.identity, 0);
+							PhotonNetwork.InstantiateSceneObject("Junk", new Vector3(hit.point.x, hit.point.y + 1, hit.point.z), Quaternion.identity, 0);
 						}
 					}
 					yield return new WaitForSeconds(1.0f);
