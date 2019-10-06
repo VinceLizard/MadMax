@@ -77,10 +77,12 @@ namespace HoudiniEngineUnity
 				{
 					_geoSync._filePath = EditorGUILayout.DelayedTextField(_geoSync._filePath);
 
+					// TODO: add field for output cache directory
+
 					GUIStyle buttonStyle = HEU_EditorUI.GetNewButtonStyle_MarginPadding(0, 0);
 					if (GUILayout.Button("...", buttonStyle, GUILayout.Width(30), GUILayout.Height(18)))
 					{
-						string filePattern = "*.bgeo";
+						string filePattern = "*.bgeo;*.bgeo.sc";
 						_geoSync._filePath = EditorUtility.OpenFilePanel("Select File", _geoSync._filePath, filePattern);
 					}
 				}

@@ -1,5 +1,5 @@
-/*
-* Copyright (c) <2018> Side Effects Software Inc.
+﻿/*
+* Copyright (c) <2019> Side Effects Software Inc.
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -24,43 +24,35 @@
 * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-Shader "Houdini/AlphaSpecularVertexColor" {
-	Properties {
-		_Color ("Main Color", Color) = (1,1,1,1)
-		_SpecColor ("Specular Color", Color) = (0.5, 0.5, 0.5, 0)
-		_Shininess ("Shininess", Range (0.01, 1)) = 0.078125
-		_MainTex ("Base (RGB) TransGloss (A)", 2D) = "white" {}
-		_BumpMap ("Normalmap", 2D) = "bump" {}
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace HoudiniEngineUnity
+{
+	/// <summary>
+	/// Object to store instance input UI state so that we can check if UI changed
+	/// and apply modifications for just this object instead of for the entire asset.
+	/// Used by HEU_InstanceInputUI.
+	/// </summary>
+	[System.Serializable]
+	public class HEU_InstanceInputUIState : ScriptableObject
+	{
+		// Whether to show all instance inputs to expanded form
+		public bool _showInstanceInputs = true;
+
+		// For pagination, the number of inputs to show per page
+		public int _numInputsToShowUI = 5;
+
+		// The current page to show
+		public int _inputsPageIndexUI = 0;
+
+		public void CopyTo(HEU_InstanceInputUIState dest)
+		{
+			dest._showInstanceInputs = _showInstanceInputs;
+			dest._numInputsToShowUI = _numInputsToShowUI;
+			dest._inputsPageIndexUI = _inputsPageIndexUI;
+		}
 	}
 
-	SubShader {
-		Tags { "Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent" }
-		LOD 400
-	
-		CGPROGRAM
-			#pragma surface surf BlinnPhong alpha
-
-			sampler2D _MainTex;
-			sampler2D _BumpMap;
-			fixed4 _Color;
-			half _Shininess;
-
-			struct Input {
-				float2 uv_MainTex;
-				float2 uv_BumpMap;
-				float4 color: Color;
-			};
-
-			void surf ( Input IN, inout SurfaceOutput o ) {
-				fixed4 tex = tex2D( _MainTex, IN.uv_MainTex );
-				o.Albedo = tex.rgb * _Color.rgb * IN.color.rgb;
-				o.Gloss = tex.a;
-				o.Alpha = tex.a * _Color.a * IN.color.a;
-				o.Specular = _Shininess;
-				o.Normal = UnpackNormal( tex2D( _BumpMap, IN.uv_BumpMap ) );
-			}
-		ENDCG
-	}
-
-	Fallback "Transparent/Specular", 1
-}
+}   // HoudiniEngineUnity

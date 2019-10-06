@@ -31,8 +31,8 @@ using System;
 using System.Text;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEngine;
-
 
 namespace HoudiniEngineUnity
 {
@@ -278,7 +278,7 @@ namespace HoudiniEngineUnity
 			if (IsPartVolume())
 			{
 				HAPI_Transform hapiTransformVolume = new HAPI_Transform();
-				hapiTransform.CopyTo(ref hapiTransformVolume);
+				HEU_GeneralUtility.CopyHAPITransform(ref hapiTransform, ref hapiTransformVolume);
 
 				hapiTransformVolume.position[0] += _terrainOffsetPosition[0];
 				hapiTransformVolume.position[1] += _terrainOffsetPosition[1];
@@ -467,6 +467,9 @@ namespace HoudiniEngineUnity
 			ObjectInstancesBeenGenerated = false;
 		}
 
+		/// <summary>
+		/// Clears the generated mesh output for this part.
+		/// </summary>
 		public void ClearGeneratedMeshOutput()
 		{
 			if (_generatedOutput != null)
@@ -474,7 +477,7 @@ namespace HoudiniEngineUnity
 				HEU_GeneralUtility.DestroyGeneratedMeshMaterialsLODGroups(_generatedOutput._outputData._gameObject, true);
 				HEU_GeneratedOutput.DestroyGeneratedOutputChildren(_generatedOutput);
 				HEU_GeneratedOutput.ClearGeneratedMaterialReferences(_generatedOutput._outputData);
-				HEU_GeneralUtility.DestroyGeneratedComponents(_generatedOutput._outputData._gameObject);
+				HEU_GeneralUtility.DestroyGeneratedMeshComponents(_generatedOutput._outputData._gameObject);
 			}
 		}
 
@@ -553,7 +556,7 @@ namespace HoudiniEngineUnity
 				HEU_PartData partData = _geoNode.GetPartFromPartID(instanceNodeIDs[i]);
 				if (partData == null)
 				{
-					Debug.LogErrorFormat("Part with id {0} is missing. Unable to setup instancer!", instanceNodeIDs[i]);
+					Debug.LogWarningFormat("Part with id {0} is missing. Unable to generate instance!", instanceNodeIDs[i]);
 					return;
 				}
 
@@ -616,7 +619,7 @@ namespace HoudiniEngineUnity
 				Transform partTransform = OutputGameObject.transform;
 
 				HAPI_Transform[] instanceTransforms = new HAPI_Transform[numInstances];
-				if (session.GetInstanceTransforms(_geoID, HAPI_RSTOrder.HAPI_SRT, instanceTransforms, 0, numInstances))
+				if (!HEU_GeneralUtility.GetArray3Arg(_geoID, _partID, HAPI_RSTOrder.HAPI_SRT, session.GetInstanceTransformsOnPart, instanceTransforms, 0, numInstances))
 				{
 					int numTransforms = instanceTransforms.Length;
 					for (int j = 0; j < numTransforms; ++j)
@@ -666,7 +669,7 @@ namespace HoudiniEngineUnity
 			Transform partTransform = OutputGameObject.transform;
 
 			HAPI_Transform[] instanceTransforms = new HAPI_Transform[numInstances];
-			if (session.GetInstanceTransforms(_geoID, HAPI_RSTOrder.HAPI_SRT, instanceTransforms, 0, numInstances))
+			if (!HEU_GeneralUtility.GetArray3Arg(_geoID, _partID, HAPI_RSTOrder.HAPI_SRT, session.GetInstanceTransformsOnPart, instanceTransforms, 0, numInstances))
 			{
 				int numInstancesCreated = 0;
 				int numTransforms = instanceTransforms.Length;
@@ -696,13 +699,13 @@ namespace HoudiniEngineUnity
 			}
 
 			HAPI_NodeId[] instancedNodeIds = new HAPI_NodeId[numInstances];
-			if (!session.GetInstancedObjectIds(_geoID, instancedNodeIds, 0, numInstances))
+			if (!HEU_GeneralUtility.GetArray1Arg(_geoID, session.GetInstancedObjectIds, instancedNodeIds, 0, numInstances))
 			{
 				return;
 			}
 
 			HAPI_Transform[] instanceTransforms = new HAPI_Transform[numInstances];
-			if (!session.GetInstanceTransforms(_geoID, HAPI_RSTOrder.HAPI_SRT, instanceTransforms, 0, numInstances))
+			if (!HEU_GeneralUtility.GetArray3Arg(_geoID, _partID, HAPI_RSTOrder.HAPI_SRT, session.GetInstanceTransformsOnPart, instanceTransforms, 0, numInstances))
 			{
 				return;
 			}
@@ -768,8 +771,9 @@ namespace HoudiniEngineUnity
 				return;
 			}
 
+			// Get the part-specific instance transforms
 			HAPI_Transform[] instanceTransforms = new HAPI_Transform[numInstances];
-			if (!session.GetInstanceTransforms(_geoID, HAPI_RSTOrder.HAPI_SRT, instanceTransforms, 0, numInstances))
+			if (!HEU_GeneralUtility.GetArray3Arg(_geoID, _partID, HAPI_RSTOrder.HAPI_SRT, session.GetInstanceTransformsOnPart, instanceTransforms, 0, numInstances))
 			{
 				return;
 			}
@@ -878,7 +882,7 @@ namespace HoudiniEngineUnity
 			}
 
 			HAPI_Transform[] instanceTransforms = new HAPI_Transform[numInstances];
-			if (!session.GetInstanceTransforms(_geoID, HAPI_RSTOrder.HAPI_SRT, instanceTransforms, 0, numInstances))
+			if (!HEU_GeneralUtility.GetArray3Arg(_geoID, _partID, HAPI_RSTOrder.HAPI_SRT, session.GetInstanceTransformsOnPart, instanceTransforms, 0, numInstances))
 			{
 				return;
 			}
@@ -969,8 +973,7 @@ namespace HoudiniEngineUnity
 			HEU_HAPIUtility.ApplyLocalTransfromFromHoudiniToUnityForInstance(ref hapiTransform, instanceTransform);
 
 			// Apply offsets
-			Vector3 rotation = instanceTransform.localRotation.eulerAngles;
-			instanceTransform.localRotation = Quaternion.Euler(rotation + rotationOffset);
+			instanceTransform.localRotation = instanceTransform.localRotation * Quaternion.Euler(rotationOffset);
 			instanceTransform.localScale = Vector3.Scale(instanceTransform.localScale, scaleOffset);
 
 			// When cloning, the instanced part might have been made invisible, so re-enable renderer to have the cloned instance display it.
@@ -1167,7 +1170,7 @@ namespace HoudiniEngineUnity
 
 						if (bWriteMeshesToAssetDatabase)
 						{
-							HEU_AssetDatabase.CreateAddObjectInAssetCacheFolder(assetName, assetObjectFileName, targetMesh, ref bakedAssetPath, ref assetDBObject);
+							HEU_AssetDatabase.CreateAddObjectInAssetCacheFolder(assetName, assetObjectFileName, targetMesh, "", ref bakedAssetPath, ref assetDBObject);
 						}
 					}
 
@@ -1201,7 +1204,7 @@ namespace HoudiniEngineUnity
 
 						if (bWriteMeshesToAssetDatabase)
 						{
-							HEU_AssetDatabase.CreateAddObjectInAssetCacheFolder(assetName, assetObjectFileName, targetColliderMesh, ref bakedAssetPath, ref assetDBObject);
+							HEU_AssetDatabase.CreateAddObjectInAssetCacheFolder(assetName, assetObjectFileName, targetColliderMesh, "", ref bakedAssetPath, ref assetDBObject);
 						}
 					}
 
@@ -1267,7 +1270,7 @@ namespace HoudiniEngineUnity
 						string materialPath = HEU_AssetDatabase.GetAssetPath(srcMaterial);
 						if (!string.IsNullOrEmpty(materialPath) && HEU_AssetDatabase.IsPathInAssetCache(materialPath))
 						{
-							newMaterial = HEU_AssetDatabase.LoadAssetCopy(srcMaterial, bakedAssetPath, typeof(Material), false) as Material;
+							newMaterial = HEU_AssetDatabase.CopyAndLoadAssetWithRelativePath(srcMaterial, bakedAssetPath, "", typeof(Material), false) as Material;
 							if (newMaterial == null)
 							{
 								throw new HEU_HoudiniEngineError(string.Format("Unable to copy material. Stopping bake!"));
@@ -1295,7 +1298,7 @@ namespace HoudiniEngineUnity
 								Texture srcDiffuseTexture = newMaterial.mainTexture;
 								if (srcDiffuseTexture != null)
 								{
-									Texture newDiffuseTexture = HEU_AssetDatabase.LoadAssetCopy(srcDiffuseTexture, bakedAssetPath, typeof(Texture), false) as Texture;
+									Texture newDiffuseTexture = HEU_AssetDatabase.CopyAndLoadAssetWithRelativePath(srcDiffuseTexture, bakedAssetPath, "", typeof(Texture), false) as Texture;
 									if (newDiffuseTexture == null)
 									{
 										throw new HEU_HoudiniEngineError(string.Format("Unable to copy texture. Stopping bake!"));
@@ -1308,7 +1311,7 @@ namespace HoudiniEngineUnity
 							Texture srcNormalMap = materials[m].GetTexture(HEU_Defines.UNITY_SHADER_BUMP_MAP);
 							if (srcNormalMap != null)
 							{
-								Texture newNormalMap = HEU_AssetDatabase.LoadAssetCopy(srcNormalMap, bakedAssetPath, typeof(Texture), false) as Texture;
+								Texture newNormalMap = HEU_AssetDatabase.CopyAndLoadAssetWithRelativePath(srcNormalMap, bakedAssetPath, "", typeof(Texture), false) as Texture;
 								if (newNormalMap == null)
 								{
 									throw new HEU_HoudiniEngineError(string.Format("Unable to copy texture. Stopping bake!"));
@@ -1349,21 +1352,69 @@ namespace HoudiniEngineUnity
 						bakedAssetPath = HEU_AssetDatabase.GetAssetRootPath(targetTerrainData);
 					}
 
-					//targetTerrainData = TerrainData.Instantiate(sourceTerrainData);
-					//targetTerrain.terrainData = targetTerrainData;
-					//targetTerrain.Flush();
-
-					// Note: ignoring bWriteMeshesToAssetDatabase and always writing to asset db
-					//HEU_AssetDatabase.CreateAddObjectInAssetCacheFolder(assetName, assetObjectFileName, targetTerrainData, ref bakedAssetPath, ref assetDBObject);
-
 					if (string.IsNullOrEmpty(bakedAssetPath))
 					{
 						bakedAssetPath = HEU_AssetDatabase.CreateUniqueBakePath(assetName);
 					}
 
+					// Copy over the TerrainData, and TerrainLayers. But both of these are stored as files on disk. 
+					// We will need to copy them if the HDA generated them.
+					// Note: ignoring bWriteMeshesToAssetDatabase and always writing to asset db because terrain 
+					// files need to stored in asset db
+
+					string sourceAssetPath = HEU_AssetDatabase.GetAssetPath(sourceTerrainData);
+
+					// Form the baked terrain path with sub folders, by acquiring the geo name, and terrain tile index:
+					//	 sourceAssetPath	= "Assets/HoudiniEngineAssetCache/Working/{asset name}/{geo name}/Terrain/Tile0/TerrainData.asset"
+					//	 bakedAssetPath		= "Assets/HoudiniEngineAssetCache/Baked/{asset name}"
+					// =>bakedTerrainPath	= "Assets/HoudiniEngineAssetCache/Baked/{asset name}/{geo name}/Terrain/Tile0"
+					string bakedTerrainPath = bakedAssetPath;
+
+					// Find the geo name and terrain tile index
+					//	@"/(Working)/(\w+)/(\w+)/(Terrain/Tile\d)/TerrainData.asset$"
+					string pattern = string.Format(@"{0}(Working){0}(\w+){0}(\w+){0}({1}{0}{2}\d){0}TerrainData{3}", 
+						HEU_Platform.DirectorySeparatorStr,
+						HEU_Defines.HEU_FOLDER_TERRAIN,
+						HEU_Defines.HEU_FOLDER_TILE,
+						HEU_Defines.HEU_EXT_ASSET);
+					Regex reg = new Regex(pattern); 
+					Match match = reg.Match(sourceAssetPath);
+					
+					/* Leaving it in for debugging
+					Debug.Log("Match: " + match.Success);
+					if (match.Success)
+					{
+						int numGroups = match.Groups.Count;
+						for(int g = 0; g < numGroups; ++g)
+						{
+							Debug.LogFormat("Group: {0} - {1}", g, match.Groups[g].Value);
+						}
+					}
+					*/
+
+					// We should get 5 groups matched: {full match}, Working, {asset name}, {geo name}, Terrain/Tile{index}
+					if (match.Success && match.Groups.Count == 5)
+					{
+						bakedTerrainPath = HEU_Platform.BuildPath(bakedTerrainPath, match.Groups[3].Value, match.Groups[4].Value);
+					}
+
 					// We're going to copy the source terrain data asset file, then load the copy and assign to the target
-					// Note: ignoring bWriteMeshesToAssetDatabase and always writing to asset db because terrain data needs to be stored on file
-					targetTerrainData = HEU_AssetDatabase.LoadAssetCopy(sourceTerrainData, bakedAssetPath, typeof(TerrainData), true) as TerrainData;
+					targetTerrainData = HEU_AssetDatabase.CopyAndLoadAssetFromAssetCachePath(sourceTerrainData, bakedTerrainPath, typeof(TerrainData), true) as TerrainData;
+
+#if UNITY_2018_3_OR_NEWER
+					// Copy over the TerrainLayers
+					TerrainLayer[] sourceTerrainLayers = sourceTerrainData.terrainLayers;
+					if (sourceTerrainLayers != null)
+					{
+						TerrainLayer[] tergetTerrainLayers = new TerrainLayer[sourceTerrainLayers.Length];
+						for(int m = 0; m < sourceTerrainLayers.Length; ++m)
+						{
+							tergetTerrainLayers[m] = HEU_AssetDatabase.CopyAndLoadAssetFromAssetCachePath(sourceTerrainLayers[m], bakedTerrainPath, typeof(TerrainLayer), true) as TerrainLayer;
+						}
+						targetTerrainData.terrainLayers = tergetTerrainLayers;
+					}
+#endif
+
 					targetTerrain.terrainData = targetTerrainData;
 					targetTerrain.Flush();
 				}
@@ -1585,9 +1636,13 @@ namespace HoudiniEngineUnity
 					// Update transform of each existing instance
 					HEU_GeneralUtility.CopyLocalTransformValues(srcChildGO.transform, targetChildGO.transform);
 
-					// Copy component data
-					CopyGameObjectComponents(srcChildGO, targetChildGO, assetName, sourceToTargetMeshMap, sourceToCopiedMaterials, bWriteMeshesToAssetDatabase, ref bakedAssetPath, 
-						ref assetDBObject, assetObjectFileName, bDeleteExistingComponents, bDontDeletePersistantResources);
+					if (!bSrcPrefabInstance)
+					{
+						// Copy component data only if not a prefab instance. 
+						// Otherwise, copying prefab instances breaks the prefab connection and creates duplicates (e.g. instancing existing prefabs).
+						CopyGameObjectComponents(srcChildGO, targetChildGO, assetName, sourceToTargetMeshMap, sourceToCopiedMaterials, bWriteMeshesToAssetDatabase, ref bakedAssetPath,
+							ref assetDBObject, assetObjectFileName, bDeleteExistingComponents, bDontDeletePersistantResources);
+					}
 				}
 
 				if (unprocessedTargetChildren.Count > 0)
@@ -1881,24 +1936,30 @@ namespace HoudiniEngineUnity
 			_terrainOffsetPosition = offsetPosition;
 		}
 
-		public void SetTerrainData(TerrainData terrainData)
+		/// <summary>
+		/// Saves the given terrainData to the AssetDatabase for this part.
+		/// Adds to existing saved asset file or creates this as the root asset.
+		/// </summary>
+		/// <param name="terrainData">The TerrainData object to save</param>
+		public void SetTerrainData(TerrainData terrainData, string relativeFolderPath)
 		{
-			if (HEU_AssetDatabase.ContainsAsset(terrainData))
+			// Remove the old asset from the AssetDB if its different
+			if (_assetDBTerrainData != null && terrainData != _assetDBTerrainData && HEU_AssetDatabase.ContainsAsset(_assetDBTerrainData))
 			{
-				_assetDBTerrainData = terrainData;
+				HEU_AssetDatabase.DeleteAsset(_assetDBTerrainData);
+				_assetDBTerrainData = null;
+			}
+
+			// Add new asset if it doesn't exist in AssetDB
+			if (!HEU_AssetDatabase.ContainsAsset(terrainData))
+			{
+				string assetPathName = "TerrainData" + HEU_Defines.HEU_EXT_ASSET;
+				Debug.Log("Saving terrain data: " + assetPathName);
+				ParentAsset.AddToAssetDBCache(assetPathName, terrainData, relativeFolderPath, ref _assetDBTerrainData);
 			}
 			else
 			{
-				if (_assetDBTerrainData != null && HEU_AssetDatabase.ContainsAsset(_assetDBTerrainData))
-				{
-					HEU_AssetDatabase.DeleteAsset(_assetDBTerrainData);
-				}
-				_assetDBTerrainData = null;
-
-				string objectName = ParentGeoNode.ObjectNode != null ? ParentGeoNode.ObjectNode.ObjectName : "";
-				string assetPathName = string.Format("Asset_{0}_{1}_{2}_TerrainData.asset", objectName, ParentGeoNode.GeoName, PartID);
-				//Debug.Log("Saving terrain data: " + assetPathName);
-				ParentAsset.AddToAssetDBCache(assetPathName, terrainData, ref _assetDBTerrainData);
+				_assetDBTerrainData = terrainData;
 			}
 		}
 
