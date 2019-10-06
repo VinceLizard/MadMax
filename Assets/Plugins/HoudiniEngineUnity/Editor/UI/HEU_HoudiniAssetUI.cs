@@ -69,6 +69,9 @@ namespace HoudiniEngineUnity
 		// Cache reference to the custom Handles editor
 		private Editor _handlesEditor;
 
+		// Draws UI for instance inputs
+		private HEU_InstanceInputUI _instanceInputUI;
+
 		//	GUI CONTENT -----------------------------------------------------------------------------------------------
 
 		private static Texture2D _reloadhdaIcon;
@@ -141,6 +144,10 @@ namespace HoudiniEngineUnity
 
 		public void RefreshUI()
 		{
+			// Clear out the instance input cache.
+			// Needed after a cook.
+			_instanceInputUI = null;
+
 			Repaint();
 		}
 
@@ -300,67 +307,11 @@ namespace HoudiniEngineUnity
 		/// <param name="assetObject">Serialized HDA asset object</param>
 		private void DrawInstanceInputs(HEU_HoudiniAsset asset, SerializedObject assetObject)
 		{
-			HEU_EditorUI.DrawSeparator();
-
-			// Get list of object input fields
-			List<HEU_ObjectInstanceInfo> objInstanceInfos = new List<HEU_ObjectInstanceInfo>();
-			asset.PopulateObjectInstanceInfos(objInstanceInfos);
-
-			int numObjInstances = objInstanceInfos.Count;
-
-			// Display input section if at least have 1 input field
-			if (numObjInstances > 0)
+			if (_instanceInputUI == null)
 			{
-				HEU_EditorUI.BeginSection();
-
-				SerializedProperty showInstanceInputsProperty = assetObject.FindProperty("_showInstanceInputs");
-
-				showInstanceInputsProperty.boolValue = HEU_EditorUI.DrawFoldOut(showInstanceInputsProperty.boolValue, "INSTANCE INPUTS");
-				if (showInstanceInputsProperty.boolValue)
-				{
-					EditorGUI.BeginChangeCheck();
-
-					// Draw each instanced input info
-					for (int i = 0; i < numObjInstances; ++i)
-					{
-						EditorGUILayout.BeginVertical();
-
-						string inputName = objInstanceInfos[i]._partTarget.PartName + "_" + i;
-
-						SerializedObject objInstanceSerialized = new SerializedObject(objInstanceInfos[i]);
-
-						SerializedProperty instancedInputsProperty = HEU_EditorUtility.GetSerializedProperty(objInstanceSerialized, "_instancedInputs");
-						if (instancedInputsProperty != null)
-						{
-							int inputCount = instancedInputsProperty.arraySize;
-							EditorGUILayout.PropertyField(instancedInputsProperty, new GUIContent(inputName), true);
-
-							// When input size increases, Unity creates default values for HEU_InstancedInput which results in
-							// zero value for scale offset. This fixes it up.
-							int newInputCount = instancedInputsProperty.arraySize;
-							if (inputCount < newInputCount)
-							{
-								for (int inputIndex = inputCount; inputIndex < newInputCount; ++inputIndex)
-								{
-									SerializedProperty scaleProperty = instancedInputsProperty.GetArrayElementAtIndex(inputIndex).FindPropertyRelative("_scaleOffset");
-									scaleProperty.vector3Value = Vector3.one;
-								}
-							}
-						}
-
-						objInstanceSerialized.ApplyModifiedProperties();
-
-						EditorGUILayout.EndVertical();
-					}
-
-					if(EditorGUI.EndChangeCheck())
-					{
-						asset.RequestCook(bCheckParametersChanged: true, bAsync: true, bSkipCookCheck: false, bUploadParameters: true);
-					}
-				}
-
-				HEU_EditorUI.EndSection();
+				_instanceInputUI = new HEU_InstanceInputUI();
 			}
+			_instanceInputUI.DrawInstanceInputs(asset, assetObject);
 		}
 
 		/// <summary>
@@ -394,6 +345,7 @@ namespace HoudiniEngineUnity
 					HEU_EditorUI.DrawPropertyField(assetObject, "_generateMeshUsingPoints", "Generate Mesh Using Points", "Use point attributes instead of vertex attributes for geometry. Ignores vertex attributes.");
 					HEU_EditorUI.DrawPropertyField(assetObject, "_useLODGroups", "Use LOD Groups", "Automatically create Unity LOD group if found.");
 					HEU_EditorUI.DrawPropertyField(assetObject, "_ignoreNonDisplayNodes", "Ignore NonDisplay Nodes", "Only display node geometry will be created.");
+					HEU_EditorUI.DrawPropertyField(assetObject, "_splitGeosByGroup", "Split Geos By Group", "Split geometry into separate gameobjects by group. Deprecated feature and only recommended for simple use cases.");
 
 					if (asset.NumAttributeStores() > 0)
 					{
@@ -735,6 +687,13 @@ namespace HoudiniEngineUnity
 						{
 							checkParameterChange.boolValue = true;
 						}
+
+						// But we do want to always upload input geometry on user hitting Recook expliclity
+						SerializedProperty forceUploadInputs = HEU_EditorUtility.GetSerializedProperty(assetObject, "_forceUploadInputs");
+						if (forceUploadInputs != null)
+						{
+							forceUploadInputs.boolValue = true;
+						}
 					}
 				}
 			}
@@ -1025,6 +984,7 @@ namespace HoudiniEngineUnity
 						{
 							SerializedObject cacheObjectSerialized = new SerializedObject(volumeCaches[i]);
 							bool bChanged = false;
+							bool bStrengthChanged = false;
 
 							SerializedProperty layersProperty = cacheObjectSerialized.FindProperty("_layers");
 							if (layersProperty == null || layersProperty.arraySize == 0)
@@ -1047,7 +1007,13 @@ namespace HoudiniEngineUnity
 										continue;
 									}
 
-									string layerName = string.Format("Layer: {0}", layerProperty.FindPropertyRelative("_layerName").stringValue);
+									// Skipping "height" layer on UI since its treated as Houdini-specific layer
+									string layerName = layerProperty.FindPropertyRelative("_layerName").stringValue;
+									if (layerName.Equals(HEU_Defines.HAPI_HEIGHTFIELD_LAYERNAME_HEIGHT))
+									{
+										continue;
+									}
+									layerName = string.Format("Layer: {0}", layerName);
 
 									SerializedProperty uiExpandedProperty = layerProperty.FindPropertyRelative("_uiExpanded");
 									bool bExpanded = uiExpandedProperty != null ? uiExpandedProperty.boolValue : true;
@@ -1065,100 +1031,7 @@ namespace HoudiniEngineUnity
 
 									if (HEU_EditorUtility.EditorDrawFloatSliderProperty(layerProperty, "_strength", "Strength", "Amount to multiply the layer values by on import."))
 									{
-										bChanged = true;
-									}
-
-									SerializedProperty overrideProperty = layerProperty.FindPropertyRelative("_overrides");
-
-									SerializedProperty textureProperty = layerProperty.FindPropertyRelative("_diffuseTexture");
-									if (textureProperty != null)
-									{
-										Object textureObject = textureProperty.objectReferenceValue;
-										EditorGUILayout.PropertyField(textureProperty, new GUIContent("Diffuse Texture", "Difuse texture used by terrain layer."));
-										if (textureObject != textureProperty.objectReferenceValue)
-										{
-											SetVolumeLayerPropertyOverride(overrideProperty, HEU_VolumeLayer.Overrides.Diffuse);
-											bChanged = true;
-										}
-
-										HEU_EditorUI.DrawSeparator();
-									}
-
-#if UNITY_2018_3_OR_NEWER
-									SerializedProperty maskTextureProperty = layerProperty.FindPropertyRelative("_maskTexture");
-									if (maskTextureProperty != null)
-									{
-										Object textureObject = maskTextureProperty.objectReferenceValue;
-										EditorGUILayout.PropertyField(maskTextureProperty, new GUIContent("Mask Texture", "The mask map texture used by the terrain layer."));
-										if (textureObject != maskTextureProperty.objectReferenceValue)
-										{
-											SetVolumeLayerPropertyOverride(overrideProperty, HEU_VolumeLayer.Overrides.Mask);
-											bChanged = true;
-										}
-
-										HEU_EditorUI.DrawSeparator();
-									}
-#endif
-
-									SerializedProperty normalProperty = layerProperty.FindPropertyRelative("_normalTexture");
-									if (normalProperty != null)
-									{
-										Object normalObject = normalProperty.objectReferenceValue;
-										EditorGUILayout.PropertyField(normalProperty, new GUIContent("NormalMap", "Normal map of the splat applied to the Terrain."));
-										if (normalObject != normalProperty.objectReferenceValue)
-										{
-											SetVolumeLayerPropertyOverride(overrideProperty, HEU_VolumeLayer.Overrides.Normal);
-											bChanged = true;
-										}
-
-										HEU_EditorUI.DrawSeparator();
-									}
-
-#if UNITY_2018_3_OR_NEWER
-									if (HEU_EditorUtility.EditorDrawFloatSliderProperty(layerProperty, "_normalScale", "Normal Scale", "The normal scale value of the splat layer."))
-									{
-										SetVolumeLayerPropertyOverride(overrideProperty, HEU_VolumeLayer.Overrides.NormalScale);
-										bChanged = true;
-									}
-#endif
-
-									if (HEU_EditorUtility.EditorDrawFloatSliderProperty(layerProperty, "_metallic", "Metallic", "The metallic value of the splat layer."))
-									{
-										SetVolumeLayerPropertyOverride(overrideProperty, HEU_VolumeLayer.Overrides.Metallic);
-										bChanged = true;
-									}
-
-									if (HEU_EditorUtility.EditorDrawFloatSliderProperty(layerProperty, "_smoothness", "Smoothness", "The smoothness value of the splat layer when the main texture has no alpha channel."))
-									{
-										SetVolumeLayerPropertyOverride(overrideProperty, HEU_VolumeLayer.Overrides.Smoothness);
-										bChanged = true;
-									}
-
-#if UNITY_2018_3_OR_NEWER
-									SerializedProperty specularProperty = layerProperty.FindPropertyRelative("_specularColor");
-									if (specularProperty != null)
-									{
-										Color specColor = specularProperty.colorValue;
-										EditorGUILayout.PropertyField(specularProperty, new GUIContent("Specular", "Specular color"));
-										if (specularProperty.colorValue != specColor)
-										{
-											SetVolumeLayerPropertyOverride(overrideProperty, HEU_VolumeLayer.Overrides.Specular);
-
-											bChanged = true;
-										}
-									}
-#endif
-
-									if (HEU_EditorUtility.EditorDrawVector2RelativeProperty(layerProperty, "_tileSize", "Tile Size (W, H)", "Size of the tile used in the texture of the SplatPrototype."))
-									{
-										SetVolumeLayerPropertyOverride(overrideProperty, HEU_VolumeLayer.Overrides.TileSize);
-										bChanged = true;
-									}
-
-									if (HEU_EditorUtility.EditorDrawVector2RelativeProperty(layerProperty, "_tileOffset", "Tile Offset (X, Y)", "Offset of the tile texture of the SplatPrototype."))
-									{
-										SetVolumeLayerPropertyOverride(overrideProperty, HEU_VolumeLayer.Overrides.TileOffset);
-										bChanged = true;
+										bStrengthChanged = true;
 									}
 
 									HEU_EditorUI.DrawSeparator();
@@ -1167,14 +1040,18 @@ namespace HoudiniEngineUnity
 								EditorGUI.indentLevel--;
 							}
 
-							if(bChanged)
+							if (bStrengthChanged)
 							{
 								SerializedProperty dirtyProperty = cacheObjectSerialized.FindProperty("_isDirty");
 								if (dirtyProperty != null)
 								{
 									dirtyProperty.boolValue = true;
+									bChanged = true;
 								}
+							}
 
+							if(bChanged)
+							{
 								cacheObjectSerialized.ApplyModifiedProperties();
 							}
 						}
@@ -1186,13 +1063,6 @@ namespace HoudiniEngineUnity
 			HEU_EditorUI.DrawSeparator();
 		}
 
-		private void SetVolumeLayerPropertyOverride(SerializedProperty overrideProperty, HEU_VolumeLayer.Overrides field)
-		{
-			if (overrideProperty != null)
-			{
-				overrideProperty.intValue = (int)HEU_VolumeCache.SetLayerFieldOverride((HEU_VolumeLayer.Overrides)overrideProperty.intValue, field);
-			}
-		}
 	}
 
 }   // HoudiniEngineUnity
