@@ -10,6 +10,7 @@ public class CarGameUi : MonoBehaviour
 	[SerializeField] LeaderboardEntryUi leaderboardPrefab;
 	[SerializeField] int NumberOfEntries = 5;
 	[SerializeField] Text winnerText;
+	[SerializeField] Text instructionText;
 
 	List<LeaderboardEntryUi> leaderboardEntries = new List<LeaderboardEntryUi>();
 	List<PlayerManagerCarPhoton> cars = new List<PlayerManagerCarPhoton>();
@@ -28,6 +29,7 @@ public class CarGameUi : MonoBehaviour
 	private void Start()
 	{
 		StartCoroutine(UpdateLeaderboard());
+		instructionText.text = string.Format("The Monolith Requests {0} Blocks!", GameManagerMM.Instance.RequiredToDepot);
 	}
 
 	IEnumerator UpdateLeaderboard()
@@ -48,7 +50,7 @@ public class CarGameUi : MonoBehaviour
 			{
 				leaderboardAnchor.SetActive(false);
 				winnerText.gameObject.SetActive(true);
-				winnerText.text = winner.photonView.Owner.NickName + " Wins!!!";
+				winnerText.text = winner.photonView.Owner.NickName + " Has Served the Monolith!\nEveryone else is a disappointment!";
 				break;
 			}
 			else

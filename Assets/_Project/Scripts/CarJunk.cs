@@ -6,9 +6,17 @@ using Photon.Realtime;
 
 public class CarJunk : MonoBehaviour
 {
+	public GameObject model;
+	public float scaleSpeed = 1.0f;
+	public float scaleAmount;
 	public bool IsCollected { get; set; }
 
-	
+
+	private void Update()
+	{
+		model.transform.localScale = Vector3.one * (1f + (scaleAmount * Mathf.Abs(Mathf.Sin(Time.time * scaleSpeed))));
+	}
+
 	void OnEnable()
 	{
 		IsCollected = false;

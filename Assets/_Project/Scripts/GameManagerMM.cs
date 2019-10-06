@@ -42,9 +42,9 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 	[SerializeField]
 	private GameObject playerPrefab;
 
-	[SerializeField]
 	public int RequiredToDepot = 10;
-
+	public float JunkSpawnRadius = 50.0f;
+	public int NumberOfJunkSpawns = 50;
 	#endregion
 
 	#region MonoBehaviour CallBacks
@@ -103,8 +103,6 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 
 				Debug.LogFormat("Ignoring scene load for {0}", SceneManagerHelper.ActiveSceneName);
 			}
-
-
 		}
 
 		StartCoroutine(SpawnCoro());
@@ -124,19 +122,32 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 
 	IEnumerator SpawnCoro()
 	{
+		const int MAX_NUM_TO_SPAWN_PER_SECOND = 5;
+		const float COOLDOWN = 15.0f;
 		while (true)
 		{
 			if (PhotonNetwork.IsMasterClient)
 			{
-				var gos = GameObject.FindGameObjectsWithTag("Junk");
-				if (gos.Length < 5)
+				int amountToSpawn = 0;
+				while (
+					(amountToSpawn = Mathf.Min(MAX_NUM_TO_SPAWN_PER_SECOND, NumberOfJunkSpawns - GameObject.FindGameObjectsWithTag("Junk").Length)) 
+					 > 0
+				)
 				{
-					var v = Random.onUnitSphere * 10.0f;
-					v.y = 0.0f;
-					PhotonNetwork.InstantiateSceneObject("Junk", v , Quaternion.identity, 0);
+					for (int i = 0; i < amountToSpawn; i++)
+					{
+						var v = Random.insideUnitCircle * JunkSpawnRadius;
+						var ray = new Ray(new Vector3(v.x, 500.0f, v.y), Vector3.down);
+						RaycastHit hit;
+						if (Physics.Raycast(ray, out hit, 2000.0f, LayerMask.GetMask(new string[1] { "Terrain" })))
+						{
+							PhotonNetwork.InstantiateSceneObject("Junk", hit.point, Quaternion.identity, 0);
+						}
+					}
+					yield return new WaitForSeconds(1.0f);
 				}
 			}
-			yield return new WaitForSeconds(5.0f);
+			yield return new WaitForSeconds(COOLDOWN);
 		}
 	}
 
@@ -202,9 +213,11 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 
 	private void OnDrawGizmos()
 	{
-		Gizmos.color = Color.red;
+		Gizmos.color = new Color(0.0f, 0.0f, 1.0f, 0.5f);
 		foreach (var sp in SpawnPoints)
-			Gizmos.DrawWireSphere(sp.transform.position, 1.0f);
+			Gizmos.DrawSphere(sp.transform.position, 5.0f);
+
+		Gizmos.DrawWireSphere(this.transform.position, JunkSpawnRadius);
 	}
 	/*
 		#region Private Methods
