@@ -38,7 +38,10 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 	[Tooltip("The total junk stored")]
 	public bool IsWinner = false;
 
-	public Renderer CarUiRenderer;
+    [Tooltip("The player has enough junk to win")]
+    public bool IsLoaded = false;
+
+    public Renderer CarUiRenderer;
 	#endregion
 
 	#region Private Fields
@@ -186,6 +189,11 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 			junk.IsCollected = true;
 			junk.Collect();
 			this.Junk += 1;
+
+            if(GameManagerMM.Instance.RequiredToDepot <= this.Junk)
+            {
+                this.IsLoaded = true;
+            }
 		}
 
 		var depot = other.GetComponentInParent<CarJunkDepot>();
@@ -328,7 +336,8 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 			stream.SendNext(this.Health);
 			stream.SendNext(this.Junk);
 			stream.SendNext(this.IsWinner);
-		}
+            stream.SendNext(this.IsLoaded);
+        }
 		else
 		{
 			// Network player, receive data
@@ -336,7 +345,8 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 			this.Health = (float)stream.ReceiveNext();
 			this.Junk = (int)stream.ReceiveNext();
 			this.IsWinner = (bool)stream.ReceiveNext();
-		}
+            this.IsLoaded = (bool)stream.ReceiveNext();
+        }
 	}
 
 

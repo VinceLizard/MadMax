@@ -43,6 +43,14 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 
 	[SerializeField]
 	private GameObject playerPrefab;
+    [SerializeField]
+    AudioClip music;
+    [SerializeField]
+    AudioClip intenseMusic;
+    [SerializeField]
+    AudioClip loseMusic;
+
+    AudioSource thisAudio;
 
 	public int RequiredToDepot = 10;
 	public float JunkSpawnRadius = 1f;
@@ -56,7 +64,9 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 	/// </summary>
 	void Start()
 	{
-		Instance = this;
+		thisAudio = GetComponent<AudioSource>();
+
+        Instance = this;
 
 		// in case we started this demo with the wrong scene being active, simply load the menu scene
 		if (!PhotonNetwork.IsConnected)
@@ -99,6 +109,8 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 				
 				// we're in a room. spawn a character for the local player. it gets synced by using PhotonNetwork.Instantiate
 				PhotonNetwork.Instantiate(this.playerPrefab.name, spawn.position, spawn.rotation, 0);
+                thisAudio.clip = music;
+                thisAudio.Play();
 			}
 			else
 			{
