@@ -6,13 +6,46 @@ using Photon.Realtime;
 
 public class CarJunk : MonoBehaviour
 {
-	void OnTriggerEnter(Collider collider)
+	public bool IsCollected { get; set; }
+
+	
+	void OnEnable()
+	{
+		IsCollected = false;
+	}
+
+	public void Collect()
 	{
 		var pv = this.GetComponent<PhotonView>();
-		if(pv.IsMine)
+		if (pv.IsMine)
 		{
 			PhotonNetwork.Destroy(this.gameObject);
 		}
+		else
+		{
+			pv.RPC("CollectRpc", RpcTarget.MasterClient); 
+		}
+	}
+
+	[PunRPC]
+	public void CollectRpc()
+	{
+		PhotonNetwork.Destroy(this.gameObject);
+	}
+
+	void OnTriggerEnter(Collider collider)
+	{
+		/*var pv = this.GetComponent<PhotonView>();
+		if(pv.IsMine)
+		{
+			var carPhoton = collider.gameObject.GetComponentInParent<PlayerManagerCarPhoton>();
+			if (carPhoton)
+			{
+				Debug.Log("Car IsMine: " + carPhoton.GetComponent<PhotonView>().IsMine.ToString());
+				carPhoton.Junk += 1;
+				PhotonNetwork.Destroy(this.gameObject);
+			}
+		}*/
 
 	}
 }
