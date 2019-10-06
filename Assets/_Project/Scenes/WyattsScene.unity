@@ -7006,7 +7006,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ec1e45165d1f2544bff59f5a80db8ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  wheel: {fileID: 1720468872874642}
+  wheel: {fileID: 0}
 --- !u!114 &228468420
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7058,7 +7058,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ec1e45165d1f2544bff59f5a80db8ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  wheel: {fileID: 1995908349164800}
+  wheel: {fileID: 0}
 --- !u!114 &228468428
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7573,18 +7573,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!1 &1720468872874642 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8720164788901434658, guid: 3c0c2aea86720234a855da5d202f5742,
-    type: 3}
-  m_PrefabInstance: {fileID: 8719570781502513072}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1995908349164800 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8720433607685104304, guid: 3c0c2aea86720234a855da5d202f5742,
-    type: 3}
-  m_PrefabInstance: {fileID: 8719570781502513072}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &4555914448487580
 Transform:
   m_ObjectHideFlags: 0
