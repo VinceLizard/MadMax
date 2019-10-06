@@ -7,7 +7,7 @@
 Assets/AssetStoreTools*
 
 # Houdini Plugin
-Assets/Plugins/HoudiniPluginUnity/
+Assets/Plugins/HoudiniPluginUnity*
 
 # Visual Studio cache directory
 .vs/
