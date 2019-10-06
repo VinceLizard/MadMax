@@ -163,7 +163,7 @@ namespace HoudiniEngineUnity
 		public virtual void SetSessionErrorMsg(string msg, bool bLogError = false)
 		{
 			_sessionErrorMsg = msg;
-			if (bLogError && LogErrorOverride)
+			if (bLogError)
 			{
 				Debug.LogError(_sessionErrorMsg);
 			}
@@ -326,12 +326,6 @@ namespace HoudiniEngineUnity
 			return false;
 		}
 
-		public virtual bool GetServerEnvVarCount(out int env_count)
-		{
-			env_count = 0;
-			return false;
-		}
-
 		/// <summary>
 		/// Gives back the status code for a specific status type
 		/// </summary>
@@ -452,9 +446,8 @@ namespace HoudiniEngineUnity
 		/// </summary>
 		/// <param name="nodeID">ID of the node to cook</param>
 		/// <param name="bCookTemplatedGeos">Whether to recursively cook all templated geos or not</param>
-		/// <param name="bSplitGeosByGroup">Whether to split the geometry by groups. Not recommended to use, but allowing in specific situations.</param>
 		/// <returns>True if successfully cooked the node</returns>
-		public virtual bool CookNode(HAPI_NodeId nodeID, bool bCookTemplatedGeos, bool bSplitGeosByGroup = false)
+		public virtual bool CookNode(HAPI_NodeId nodeID, bool bCookTemplatedGeos)
 		{
 			return false;
 		}
@@ -732,7 +725,7 @@ namespace HoudiniEngineUnity
 		/// <param name="nodeID">Object node ID</param>
 		/// <param name="geoInfo">Geo info to populate</param>
 		/// <returns>True if successfully queried the geo info</returns>
-		public virtual bool GetDisplayGeoInfo(HAPI_NodeId nodeID, ref HAPI_GeoInfo geoInfo, bool bLogError = false)
+		public virtual bool GetDisplayGeoInfo(HAPI_NodeId nodeID, ref HAPI_GeoInfo geoInfo)
 		{
 			return false;
 		}
@@ -881,7 +874,7 @@ namespace HoudiniEngineUnity
 			return false;
 		}
 
-		public virtual bool GetInstanceTransformsOnPart(HAPI_NodeId nodeID, HAPI_PartId partID, HAPI_RSTOrder rstOrder, [Out] HAPI_Transform[] transformsArray, int start, int length)
+		public virtual bool GetInstanceTransforms(HAPI_NodeId nodeID, HAPI_RSTOrder rstOrder, [Out] HAPI_Transform[] transformsArray, int start, int length)
 		{
 			return false;
 		}

@@ -124,11 +124,6 @@ namespace HoudiniEngineUnity
 		public string InputName { get { return _inputName; } }
 
 		[SerializeField]
-		private string _labelName;
-
-		public string LabelName { get { return _labelName; } }
-
-		[SerializeField]
 		private string _paramName;
 
 		public string ParamName { get { return _paramName; } set { _paramName = value; } }
@@ -166,13 +161,12 @@ namespace HoudiniEngineUnity
 
 		// LOGIC ------------------------------------------------------------------------------------------------------
 
-		public static HEU_InputNode CreateSetupInput(HAPI_NodeId nodeID, int inputIndex, string inputName, string labelName, InputNodeType inputNodeType, HEU_HoudiniAsset parentAsset)
+		public static HEU_InputNode CreateSetupInput(HAPI_NodeId nodeID, int inputIndex, string inputName, InputNodeType inputNodeType, HEU_HoudiniAsset parentAsset)
 		{
 			HEU_InputNode newInput = ScriptableObject.CreateInstance<HEU_InputNode>();
 			newInput._nodeID = nodeID;
 			newInput._inputIndex = inputIndex;
 			newInput._inputName = inputName;
-			newInput._labelName = labelName;
 			newInput._inputNodeType = inputNodeType;
 			newInput._parentAsset = parentAsset;
 
@@ -994,64 +988,6 @@ namespace HoudiniEngineUnity
 		public void ClearUICache()
 		{
 			_uiCache = null;
-		}
-
-		/// <summary>
-		/// Appends given selectedObjects to the input field.
-		/// </summary>
-		/// <param name="selectedObjects">Array of GameObjects that should be appended into new input entries</param>
-		public void HandleSelectedObjectsForInputObjects(GameObject[] selectedObjects)
-		{
-			if (selectedObjects != null && selectedObjects.Length > 0)
-			{
-				GameObject rootGO = ParentAsset.RootGameObject;
-
-				foreach (GameObject selected in selectedObjects)
-				{
-					if (selected == rootGO)
-					{
-						continue;
-					}
-
-					InternalAddInputObjectAtEnd(selected);
-				}
-
-				RequiresUpload = true;
-
-				if (HEU_PluginSettings.CookingEnabled && ParentAsset.AutoCookOnParameterChange)
-				{
-					ParentAsset.RequestCook(bCheckParametersChanged: true, bAsync: true, bSkipCookCheck: false, bUploadParameters: true);
-				}
-			}
-		}
-
-		/// <summary>
-		///  Appends given selectedObjects to the input field.
-		/// </summary>
-		/// <param name="selectedObjects">Array of HDAs that should be appended into new input entries</param>
-		public void HandleSelectedObjectsForInputHDAs(GameObject[] selectedObjects)
-		{
-			if (selectedObjects != null && selectedObjects.Length > 0)
-			{
-				GameObject rootGO = ParentAsset.RootGameObject;
-
-				foreach (GameObject selected in selectedObjects)
-				{
-					if (selected == rootGO)
-					{
-						continue;
-					}
-
-					InternalAddInputHDAAtEnd(selected);
-				}
-
-				RequiresUpload = true;
-
-				if (HEU_PluginSettings.CookingEnabled && ParentAsset.AutoCookOnParameterChange)
-				{
-					ParentAsset.RequestCook(bCheckParametersChanged: true, bAsync: true, bSkipCookCheck: false, bUploadParameters: true);
-				}
-			}
 		}
 	}
 

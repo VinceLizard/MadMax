@@ -72,10 +72,9 @@ namespace HoudiniEngineUnity
 	public class HEU_LoadBufferVolume : HEU_LoadBufferBase
 	{
 		public int _tileIndex;
-		public List<HEU_LoadBufferVolumeLayer> _splatLayers = new List<HEU_LoadBufferVolumeLayer>();
+		public List<HEU_LoadBufferVolumeLayer> _layers = new List<HEU_LoadBufferVolumeLayer>();
 
-		public int _heightMapWidth;
-		public int _heightMapHeight;
+		public int _heightMapSize;
 		public float[,] _heightMap;
 		public float[,,] _splatMaps;
 
@@ -84,26 +83,13 @@ namespace HoudiniEngineUnity
 		public float _heightRange;
 
 		public Vector3 _position;
-
-		public string _terrainDataPath;
-
-		public HEU_VolumeScatterTrees _scatterTrees;
-
-		// Detail Layers
-		public List<HEU_DetailPrototype> _detailPrototypes = new List<HEU_DetailPrototype>();
-		public List<int[,]> _detailMaps = new List<int[,]>();
-		public HEU_DetailProperties _detailProperties;
-
-		// Specified terrain material
-		public string _specifiedTerrainMaterialName;
 	}
 
 	public class HEU_LoadBufferVolumeLayer
 	{
 		public string _layerName;
 		public HAPI_PartId _partID;
-		public int _heightMapWidth;
-		public int _heightMapHeight;
+		public int _heightMapSize;
 		public float _strength = 1.0f;
 
 		public string _diffuseTexturePath;
@@ -119,10 +105,9 @@ namespace HoudiniEngineUnity
 		public bool _uiExpanded;
 		public int _tile = 0;
 
-		public float[] _normalizedHeights;
+		public float[] _rawHeights;
 		public float _minHeight;
 		public float _maxHeight;
-		public float _heightRange;
 
 		public float _terrainSizeX;
 		public float _terrainSizeY;
@@ -131,12 +116,6 @@ namespace HoudiniEngineUnity
 		public Vector3 _minBounds;
 		public Vector3 _maxBounds;
 		public Vector3 _center;
-
-		public string _layerPath;
-
-		public bool _hasLayerAttributes;
-
-		public HFLayerType _layerType;
 	}
 
 	public class HEU_LoadBufferInstancer : HEU_LoadBufferBase
@@ -150,5 +129,6 @@ namespace HoudiniEngineUnity
 		// Instancing with asset path as source (single or multi)
 		public string[] _assetPaths;
 	}
+
 
 }   // HoudiniEngineUnity

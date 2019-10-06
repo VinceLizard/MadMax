@@ -50,9 +50,6 @@ namespace HoudiniEngineUnity
 		private static Texture2D _refreshIcon;
 		private static GUIContent _refreshContent;
 
-		// Cache the loaded terrain material that the user has selected as default
-		private static Material _terrainMaterial;
-
 
 		public static void ShowWindow()
 		{
@@ -60,7 +57,7 @@ namespace HoudiniEngineUnity
 			bool bFocus = true;
 			string title = HEU_Defines.HEU_PRODUCT_NAME + " Plugin Settings";
 
-			Rect rect = new Rect(Screen.width * 0.5f, Screen.height * 0.5f, 610, 650);
+			Rect rect = new Rect(Screen.width * 0.5f, Screen.height * 0.5f, 600, 650);
 			EditorWindow window = EditorWindow.GetWindowWithRect<HEU_SettingsWindow>(rect, bUtility, title, bFocus);
 			window.autoRepaintOnSceneChange = true;
 		}
@@ -75,15 +72,6 @@ namespace HoudiniEngineUnity
 		{
 			// Turn off auto repaint as otherwise get null access after this closes
 			this.autoRepaintOnSceneChange = false;
-
-			// Clear references
-			_terrainMaterial = null;
-		}
-
-		public void ResetStateAndRepaint()
-		{
-			_terrainMaterial = null;
-			this.Repaint();
 		}
 
 		public void OnGUI()
@@ -102,7 +90,7 @@ namespace HoudiniEngineUnity
 				DrawSection(this, "ADVANCED", this.DrawAdvancedSettings, ref _showAdvanced);
 
 				float buttonHeight = 25;
-				float buttonWidth = 200;
+				float buttonWidth = 280;
 
 				GUIStyle yellowButtonStyle = new GUIStyle(GUI.skin.button);
 				yellowButtonStyle.normal.textColor = HEU_EditorUI.GetUISafeTextColorYellow();
@@ -114,19 +102,6 @@ namespace HoudiniEngineUnity
 				using (var hs = new EditorGUILayout.HorizontalScope())
 				{
 					GUILayout.FlexibleSpace();
-					if (GUILayout.Button(HEU_EditorStrings.RELOAD_SETTINGS, yellowButtonStyle))
-					{
-						if (HEU_EditorUtility.DisplayDialog(HEU_EditorStrings.REVERT_SETTINGS + "?",
-							"Are you sure you want to reload plugin settings from heu_settings.ini file?",
-							"Yes", "No"))
-						{
-							HEU_PluginStorage.LoadFromSavedFile();
-							ResetStateAndRepaint();
-						}
-					}
-
-					GUILayout.Space(10);
-
 					if (GUILayout.Button(HEU_EditorStrings.REVERT_SETTINGS, yellowButtonStyle))
 					{
 						if (HEU_EditorUtility.DisplayDialog(HEU_EditorStrings.REVERT_SETTINGS + "?", 
@@ -134,7 +109,7 @@ namespace HoudiniEngineUnity
 							"Yes", "No"))
 						{
 							HEU_PluginStorage.ClearPluginData();
-							ResetStateAndRepaint();
+							this.Repaint();
 						}
 					}
 					GUILayout.FlexibleSpace();
@@ -421,16 +396,6 @@ namespace HoudiniEngineUnity
 					bChanged = true;
 				}
 			}
-			HEU_EditorUI.DrawSeparator();
-			{
-				bool oldValue = HEU_PluginSettings.CookOptionSplitGeosByGroup;
-				bool newValue = HEU_EditorUI.DrawToggleLeft(oldValue, "Split Geos By Group");
-				if (newValue != oldValue)
-				{
-					HEU_PluginSettings.CookOptionSplitGeosByGroup = newValue;
-					bChanged = true;
-				}
-			}
 
 			return bChanged;
 		}
@@ -463,37 +428,8 @@ namespace HoudiniEngineUnity
 			}
 			HEU_EditorUI.DrawSeparator();
 			{
-				string oldValue = HEU_PluginSettings.DefaultTerrainMaterial;
-				if (_terrainMaterial == null && !string.IsNullOrEmpty(oldValue))
-				{
-					//Debug.Log("Loading terrain material at: " + oldValue);
-					_terrainMaterial = HEU_MaterialFactory.LoadUnityMaterial(oldValue);
-				}
-
-				Material newMaterial = EditorGUILayout.ObjectField("Default Terrain Material", _terrainMaterial, typeof(Material), false) as Material;
-				if (newMaterial != _terrainMaterial)
-				{
-					string materialPath = "";
-					if (newMaterial != null)
-					{
-						materialPath = HEU_AssetDatabase.GetAssetPathWithSubAssetSupport(newMaterial);
-						if (!string.IsNullOrEmpty(materialPath) && (materialPath.StartsWith(HEU_Defines.DEFAULT_UNITY_BUILTIN_RESOURCES)))
-						{
-							// Default materials need to be specially handled
-							materialPath = HEU_AssetDatabase.GetUniqueAssetPathForUnityAsset(newMaterial);
-							newMaterial = HEU_AssetDatabase.LoadUnityAssetFromUniqueAssetPath<Material>(materialPath);
-						}
-					}
-
-					HEU_PluginSettings.DefaultTerrainMaterial = materialPath;
-					_terrainMaterial = newMaterial;
-					bChanged = true;
-				}
-			}
-			HEU_EditorUI.DrawSeparator();
-			{
 				string oldValue = HEU_PluginSettings.TerrainSplatTextureDefault;
-				string newValue = EditorGUILayout.DelayedTextField("Default Terrain Splat Texture", oldValue);
+				string newValue = EditorGUILayout.DelayedTextField("Terrain Default Splat Texture", oldValue);
 				if (!newValue.Equals(oldValue))
 				{
 					HEU_PluginSettings.TerrainSplatTextureDefault = newValue;
