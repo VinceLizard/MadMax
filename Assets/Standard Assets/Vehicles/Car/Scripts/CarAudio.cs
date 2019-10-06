@@ -1,11 +1,12 @@
 using System;
 using UnityEngine;
 using Random = UnityEngine.Random;
+using Photon.Pun;
 
 namespace UnityStandardAssets.Vehicles.Car
 {
     [RequireComponent(typeof (CarController))]
-    public class CarAudio : MonoBehaviour
+    public class CarAudio : MonoBehaviourPunCallbacks
     {
         // This script reads some of the car's current properties and plays sounds accordingly.
         // The engine sound can be a simple single clip which is looped and pitched, or it
@@ -34,6 +35,7 @@ namespace UnityStandardAssets.Vehicles.Car
         public AudioClip lowDecelClip;                                              // Audio clip for low deceleration
         public AudioClip highAccelClip;                                             // Audio clip for high acceleration
         public AudioClip highDecelClip;                                             // Audio clip for high deceleration
+        public AudioClip gravelClip;                                               // Audio clip for gravel sound when moving
         public float pitchMultiplier = 1f;                                          // Used for altering the pitch of audio clips
         public float lowPitchMin = 1f;                                              // The lowest possible pitch for the low sounds
         public float lowPitchMax = 6f;                                              // The highest possible pitch for the low sounds
@@ -46,9 +48,11 @@ namespace UnityStandardAssets.Vehicles.Car
         private AudioSource m_LowDecel; // Source for the low deceleration sounds
         private AudioSource m_HighAccel; // Source for the high acceleration sounds
         private AudioSource m_HighDecel; // Source for the high deceleration sounds
-        private bool m_StartedSound; // flag for knowing if we have started sounds
-        private CarController m_CarController; // Reference to car we are controlling
+        private AudioSource gravelAudioSource; // Source for gravel sound when moving
 
+        private bool m_StartedSound; // flag for knowing if we have started sounds
+        private bool gravelSoundStarted = false;
+        private CarController m_CarController; // Reference to car we are controlling
 
         private void StartSound()
         {
@@ -63,7 +67,19 @@ namespace UnityStandardAssets.Vehicles.Car
             {
                 m_LowAccel = SetUpEngineAudioSource(lowAccelClip);
                 m_LowDecel = SetUpEngineAudioSource(lowDecelClip);
-                m_HighDecel = SetUpEngineAudioSource(highDecelClip);
+                m_HighDecel = SetUpEngineAudioSource(highDecelClip);                
+            }
+
+            //Setup gravel audiosource
+            if (gravelClip != null)
+            {
+                gravelAudioSource = gameObject.AddComponent<AudioSource>();
+                gravelAudioSource.clip = gravelClip;
+                gravelAudioSource.volume = .2f;
+                gravelAudioSource.loop = true;
+                gravelAudioSource.minDistance = 5;
+                gravelAudioSource.maxDistance = maxRolloffDistance;
+                gravelAudioSource.dopplerLevel = 0;
             }
 
             // flag that we have started the sounds playing
@@ -86,25 +102,41 @@ namespace UnityStandardAssets.Vehicles.Car
         // Update is called once per frame
         private void Update()
         {
-            
-                // get the distance to main camera
-                float camDist = (Camera.main.transform.position - transform.position).sqrMagnitude;
+            if (!photonView.IsMine)
+                return;
 
-                // stop sound if the object is beyond the maximum roll off distance
-                if (m_StartedSound && camDist > maxRolloffDistance*maxRolloffDistance)
-                {
-                    StopSound();
-                }
+            // get the distance to main camera
+            float camDist = (Camera.main.transform.position - transform.position).sqrMagnitude;
 
-                // start the sound if not playing and it is nearer than the maximum distance
-                if (!m_StartedSound && camDist < maxRolloffDistance*maxRolloffDistance)
-                {
-                    StartSound();
-                }
-            
+            // stop sound if the object is beyond the maximum roll off distance
+            if (m_StartedSound && camDist > maxRolloffDistance * maxRolloffDistance)
+            {
+                StopSound();
+            }
+
+            // start the sound if not playing and it is nearer than the maximum distance
+            if (!m_StartedSound && camDist < maxRolloffDistance * maxRolloffDistance)
+            {
+                StartSound();
+            }
 
             if (m_StartedSound)
             {
+                //Gravel sound
+
+                if (gravelAudioSource != null)
+                {
+                    if (m_CarController.CurrentSpeed >= 5f && !gravelSoundStarted)
+                    {
+                        gravelAudioSource.Play();
+                        gravelSoundStarted = true;
+                    }
+                    else if (gravelSoundStarted && m_CarController.CurrentSpeed < 5f)
+                    {
+                        gravelAudioSource.Stop();
+                        gravelSoundStarted = false;
+                    }
+                }
                 // The pitch is interpolated between the min and max values, according to the car's revs.
                 float pitch = ULerp(lowPitchMin, lowPitchMax, m_CarController.Revs);
 
@@ -158,7 +190,7 @@ namespace UnityStandardAssets.Vehicles.Car
         }
 
 
-        // sets up and adds new audio source to the gane object
+        // sets up and adds new audio source to the game object
         private AudioSource SetUpEngineAudioSource(AudioClip clip)
         {
             // create the new audio source component on the game object and set up its properties
@@ -166,7 +198,7 @@ namespace UnityStandardAssets.Vehicles.Car
             source.clip = clip;
             source.volume = 0;
             source.loop = true;
-
+            
             // start the clip from a random point
             source.time = Random.Range(0f, clip.length);
             source.Play();

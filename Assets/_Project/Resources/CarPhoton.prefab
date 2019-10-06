@@ -5757,8 +5757,9 @@ AudioSource:
   m_GameObject: {fileID: 100032}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: bd9566abdbf08834281bfb4ea8b92a5d, type: 3}
+  OutputAudioMixerGroup: {fileID: -7349933352532201457, guid: 7788972c46d9b4f0d82273be4753f0fb,
+    type: 2}
+  m_audioClip: {fileID: 8300000, guid: cfe253069ba3a47c8a6a13407c82ab6f, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -5930,8 +5931,9 @@ AudioSource:
   m_GameObject: {fileID: 100034}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: bd9566abdbf08834281bfb4ea8b92a5d, type: 3}
+  OutputAudioMixerGroup: {fileID: -7349933352532201457, guid: 7788972c46d9b4f0d82273be4753f0fb,
+    type: 2}
+  m_audioClip: {fileID: 8300000, guid: cfe253069ba3a47c8a6a13407c82ab6f, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -6103,8 +6105,9 @@ AudioSource:
   m_GameObject: {fileID: 100036}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: bd9566abdbf08834281bfb4ea8b92a5d, type: 3}
+  OutputAudioMixerGroup: {fileID: -7349933352532201457, guid: 7788972c46d9b4f0d82273be4753f0fb,
+    type: 2}
+  m_audioClip: {fileID: 8300000, guid: cfe253069ba3a47c8a6a13407c82ab6f, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -6276,8 +6279,9 @@ AudioSource:
   m_GameObject: {fileID: 100038}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: bd9566abdbf08834281bfb4ea8b92a5d, type: 3}
+  OutputAudioMixerGroup: {fileID: -7349933352532201457, guid: 7788972c46d9b4f0d82273be4753f0fb,
+    type: 2}
+  m_audioClip: {fileID: 8300000, guid: cfe253069ba3a47c8a6a13407c82ab6f, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -6601,6 +6605,7 @@ MonoBehaviour:
   lowDecelClip: {fileID: 8300000, guid: c4d8928c75c21af43998193f0f038429, type: 3}
   highAccelClip: {fileID: 8300000, guid: 03e3bd08a6e70684dbe299a3e185fdd2, type: 3}
   highDecelClip: {fileID: 8300000, guid: 03bf91d88fce91c41995d27de63cc967, type: 3}
+  gravelClip: {fileID: 8300000, guid: 9eacd5337d0bd4c1e9ba418ff66569c2, type: 3}
   pitchMultiplier: 0.8
   lowPitchMin: 1
   lowPitchMax: 5
