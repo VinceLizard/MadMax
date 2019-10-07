@@ -185,10 +185,12 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 			}
 		}
 
+        /*
 		if (this.lasers != null && this.IsFiring != this.lasers.activeInHierarchy)
 		{
 			this.lasers.SetActive(this.IsFiring);
 		}
+        */
 	}
 
 	/// <summary>
@@ -228,7 +230,7 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 
 		// We are only interested in Beamers
 		// we should be using tags but for the sake of distribution, let's simply check by name.
-		if (other.name.Contains("Laser"))
+		/*if (other.name.Contains("Laser"))
 		{
             if (Junk > 0)
             {
@@ -236,6 +238,7 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
             }  
             this.Health -= 0.1f;
         }
+        */
 	}
 
     void OnCollisionEnter(Collision other)
@@ -268,7 +271,12 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
                     photonView.RPC("SpawnJunk", RpcTarget.MasterClient);
                 }
             }
-            
+
+            if (this.Junk <= GameManagerMM.Instance.RequiredToDepot)
+            {
+                this.IsLoaded = false;
+            }
+
             Invoke("CoolJunk", JUNK_EJECT_COOLDOWN);
         }
     }
@@ -305,7 +313,7 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 		}
 
 		// we slowly affect health when beam is constantly hitting us, so player has to move to prevent death.
-		this.Health -= 0.1f * Time.deltaTime;
+		//this.Health -= 0.1f * Time.deltaTime;
 	}
 
 
@@ -352,22 +360,8 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 	/// </summary>
 	void ProcessInputs()
 	{
-		if (Input.GetButtonDown("Fire1"))
-		{
-			// we don't want to fire when we interact with UI buttons for example. IsPointerOverGameObject really means IsPointerOver*UI*GameObject
-			// notice we don't use on on GetbuttonUp() few lines down, because one can mouse down, move over a UI element and release, which would lead to not lower the isFiring Flag.
-			if (EventSystem.current.IsPointerOverGameObject())
-			{
-				//return;
-			}
-
-			if (!this.IsFiring)
-			{
-				this.IsFiring = true;
-			}
-		}
-
-        if(Input.GetKeyDown("space"))
+        // BOOST
+        if (Input.GetKeyDown("space"))
         {
             Debug.Log("BOOST");
             if (BoostCooled)
@@ -378,14 +372,32 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
             }
         }
 
-		if (Input.GetButtonUp("Fire1"))
-		{
-			if (this.IsFiring)
-			{
-				this.IsFiring = false;
-			}
-		}
-	}
+        /*
+            if (Input.GetButtonDown("Fire1"))
+            {
+                // we don't want to fire when we interact with UI buttons for example. IsPointerOverGameObject really means IsPointerOver*UI*GameObject
+                // notice we don't use on on GetbuttonUp() few lines down, because one can mouse down, move over a UI element and release, which would lead to not lower the isFiring Flag.
+                if (EventSystem.current.IsPointerOverGameObject())
+                {
+                    //return;
+                }
+
+                if (!this.IsFiring)
+                {
+                    this.IsFiring = true;
+                }
+            }
+
+
+            if (Input.GetButtonUp("Fire1"))
+            {
+                if (this.IsFiring)
+                {
+                    this.IsFiring = false;
+                }
+            }
+            */
+    }
 
     void BoostCooler()
     {
@@ -401,8 +413,8 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 		if (stream.IsWriting)
 		{
 			// We own this player: send the others our data
-			stream.SendNext(this.IsFiring);
-			stream.SendNext(this.Health);
+			//stream.SendNext(this.IsFiring);
+			//stream.SendNext(this.Health);
 			stream.SendNext(this.Junk);
 			stream.SendNext(this.IsWinner);
             stream.SendNext(this.IsLoaded);
@@ -410,8 +422,8 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 		else
 		{
 			// Network player, receive data
-			this.IsFiring = (bool)stream.ReceiveNext();
-			this.Health = (float)stream.ReceiveNext();
+			// this.IsFiring = (bool)stream.ReceiveNext();
+			// this.Health = (float)stream.ReceiveNext();
 			this.Junk = (int)stream.ReceiveNext();
 			this.IsWinner = (bool)stream.ReceiveNext();
             this.IsLoaded = (bool)stream.ReceiveNext();
