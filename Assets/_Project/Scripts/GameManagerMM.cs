@@ -25,12 +25,15 @@ using System.Collections.Generic;
 /// </summary>
 public class GameManagerMM : MonoBehaviourPunCallbacks
 {
+    const int MAX_NUM_TO_SPAWN_PER_SECOND = 5;
+    const float COOLDOWN = 1.0f;
 
-	#region Public Fields
+    #region Public Fields
 
-	static public GameManagerMM Instance;
+    static public GameManagerMM Instance;
 
 	public List<Transform> SpawnPoints;
+    public bool EndGame = false;
 	#endregion
 
 	#region Private Fields
@@ -38,13 +41,36 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 	private GameObject instance;
 
 	[Tooltip("The prefab to use for representing the player")]
-
 	[SerializeField]
 	private GameObject playerPrefab;
+    [SerializeField]
+    AudioClip music;
+    [SerializeField]
+    AudioClip intenseMusic;
+    [SerializeField]
+    AudioClip loseMusic;
+    [SerializeField]
+    GameObject endGameOrchestralHit;
+    [SerializeField]
+    GameObject endGameVO;
+    [SerializeField]
+    GameObject startVO;
+    [SerializeField]
+    GameObject winVO;
+    [SerializeField]
+    GameObject loseVO;
+    [SerializeField]
+    GameObject revertVO;
+    [SerializeField]
+    float musicFadeTimeInSeconds = 2f;
+    AudioSource thisAudio;
+
+    bool triggerEndGame = false;
+    bool audioTransitioning = false;
 
 	public int RequiredToDepot = 10;
-	public float JunkSpawnRadius = 50.0f;
-	public int NumberOfJunkSpawns = 50;
+	public float JunkSpawnRadius = 1f;
+	public int NumberOfJunkSpawns = 500;
 	#endregion
 
 	#region MonoBehaviour CallBacks
@@ -54,7 +80,9 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 	/// </summary>
 	void Start()
 	{
-		Instance = this;
+		thisAudio = GetComponent<AudioSource>();
+
+        Instance = this;
 
 		// in case we started this demo with the wrong scene being active, simply load the menu scene
 		if (!PhotonNetwork.IsConnected)
@@ -71,8 +99,6 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 		}
 		else
 		{
-
-
 			if (PlayerManagerCarPhoton.LocalPlayerInstance == null)
 			{
 				Debug.LogFormat("We are Instantiating LocalPlayer from {0}", SceneManagerHelper.ActiveSceneName);
@@ -97,6 +123,9 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 				
 				// we're in a room. spawn a character for the local player. it gets synced by using PhotonNetwork.Instantiate
 				PhotonNetwork.Instantiate(this.playerPrefab.name, spawn.position, spawn.rotation, 0);
+                Instantiate(startVO, transform.position, transform.rotation);
+                thisAudio.clip = music;
+                thisAudio.Play();
 			}
 			else
 			{
@@ -118,16 +147,67 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 		{
 			QuitApplication();
 		}
+
+        if (EndGame != triggerEndGame) 
+        {
+            triggerEndGame = EndGame;
+            if (triggerEndGame) 
+            {
+                if (!audioTransitioning) {
+                    StartCoroutine(StartEndGame());
+                }
+            } else {
+                if (!audioTransitioning) {
+                    StartCoroutine(RevertEndGame());
+                }
+            }
+        }
 	}
 
-	IEnumerator SpawnCoro()
+    // switch to endgame music
+    IEnumerator StartEndGame() {
+        audioTransitioning = true;
+        //Instantiate(endGameOrchestralHit, transform.position, transform.rotation);
+        Instantiate(endGameVO, transform.position, transform.rotation);
+        var t = 0f;
+        while (t < musicFadeTimeInSeconds) {
+            t += .1f;
+            thisAudio.volume = 1-(t/musicFadeTimeInSeconds);
+            yield return new WaitForSeconds(.1f);
+        }
+        thisAudio.Stop();
+        thisAudio.volume = 1;
+        thisAudio.clip = intenseMusic;
+        thisAudio.Play();
+        audioTransitioning = false;
+    }
+
+    // switch to normal music
+    IEnumerator RevertEndGame() {
+        audioTransitioning = true;
+        Instantiate(revertVO, transform.position, transform.rotation);
+        var t = 0f;
+        while (t < musicFadeTimeInSeconds) {
+            t += .1f;
+            thisAudio.volume = 1 - (t / musicFadeTimeInSeconds);
+            yield return new WaitForSeconds(.1f);
+        }
+        thisAudio.Stop();
+        thisAudio.volume = 1;
+        thisAudio.clip = music;
+        thisAudio.Play();
+        audioTransitioning = false;
+        yield return null;
+    }
+
+    // Spawn junk
+    IEnumerator SpawnCoro()
 	{
-		const int MAX_NUM_TO_SPAWN_PER_SECOND = 5;
-		const float COOLDOWN = 15.0f;
 		while (true)
 		{
 			if (PhotonNetwork.IsMasterClient)
 			{
+                Debug.Log("Trying to spawn");
 				int amountToSpawn = 0;
 				while (
 					(amountToSpawn = Mathf.Min(MAX_NUM_TO_SPAWN_PER_SECOND, NumberOfJunkSpawns - GameObject.FindGameObjectsWithTag("Junk").Length)) 
@@ -141,7 +221,8 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 						RaycastHit hit;
 						if (Physics.Raycast(ray, out hit, 2000.0f, LayerMask.GetMask(new string[1] { "Terrain" })))
 						{
-							PhotonNetwork.InstantiateSceneObject("Junk", hit.point, Quaternion.identity, 0);
+                            Debug.Log("Spawning");
+							PhotonNetwork.InstantiateSceneObject("Junk", new Vector3(hit.point.x, hit.point.y + 1, hit.point.z), Quaternion.identity, 0);
 						}
 					}
 					yield return new WaitForSeconds(1.0f);

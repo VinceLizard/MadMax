@@ -6,21 +6,47 @@ using Photon.Realtime;
 
 public class CarJunk : MonoBehaviour
 {
-	public GameObject model;
+    private static float JUNK_EJECTION_POWER = 10;
+    
+    public GameObject model;
 	public float scaleSpeed = 1.0f;
 	public float scaleAmount;
 	public bool IsCollected { get; set; }
 
+    private Rigidbody rb;
 
-	private void Update()
-	{
-		model.transform.localScale = Vector3.one * (1f + (scaleAmount * Mathf.Abs(Mathf.Sin(Time.time * scaleSpeed))));
-	}
+    private void Awake()
+    {
+        rb = gameObject.GetComponent<Rigidbody>();
+        EjectJunk();
+    }
 
-	void OnEnable()
-	{
-		IsCollected = false;
-	}
+    void OnEnable()
+    {
+        IsCollected = false;
+        StartCoroutine("Pulsate");
+    }
+
+    private void OnDisable()
+    {
+        StopCoroutine("Pulsate");
+        model.transform.localScale = Vector3.one;
+    }
+
+    IEnumerator Pulsate()
+    {
+        yield return new WaitForSeconds(1);
+        while(rb.velocity.magnitude >= Mathf.Epsilon)
+        {
+            yield return null;
+        }
+
+        while(true)
+        {
+            model.transform.localScale = Vector3.one * (1f + (scaleAmount * Mathf.Abs(Mathf.Sin(Time.time * scaleSpeed))));
+            yield return null;
+        }
+    }
 
 	public void Collect()
 	{
@@ -40,6 +66,14 @@ public class CarJunk : MonoBehaviour
 	{
 		PhotonNetwork.Destroy(this.gameObject);
 	}
+
+    public void EjectJunk()
+    {
+        var x = Random.Range(2, 3);
+        var z = Random.Range(2, 3);
+        Vector3 dir = new Vector3(x, 1, z).normalized;
+        this.rb.AddForce(dir * JUNK_EJECTION_POWER, ForceMode.Impulse);
+    }
 
 	void OnTriggerEnter(Collider collider)
 	{

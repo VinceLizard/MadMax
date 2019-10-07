@@ -21,9 +21,12 @@ using Photon.Realtime;
 /// </summary>
 public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 {
-	#region Public Fields
 
-	[Tooltip("The current Health of our player")]
+    private static float JUNK_SPAWN_EJECT_HEIGHT_OFFSET = 7;
+
+    #region Public Fields
+
+    [Tooltip("The current Health of our player")]
 	public float Health = 1f;
 
 	[Tooltip("The local player instance. Use this to know if the local player is represented in the Scene")]
@@ -35,7 +38,10 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 	[Tooltip("The total junk stored")]
 	public bool IsWinner = false;
 
-	public Renderer CarUiRenderer;
+    [Tooltip("The player has enough junk to win")]
+    public bool IsLoaded = false;
+
+    public Renderer CarUiRenderer;
 	#endregion
 
 	#region Private Fields
@@ -183,6 +189,11 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 			junk.IsCollected = true;
 			junk.Collect();
 			this.Junk += 1;
+
+            if(GameManagerMM.Instance.RequiredToDepot <= this.Junk)
+            {
+                this.IsLoaded = true;
+            }
 		}
 
 		var depot = other.GetComponentInParent<CarJunkDepot>();
@@ -196,13 +207,45 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 
 		// We are only interested in Beamers
 		// we should be using tags but for the sake of distribution, let's simply check by name.
-		if (!other.name.Contains("Beam"))
+		if (other.name.Contains("Laser"))
 		{
-			return;
-		}
-
-		this.Health -= 0.1f;
+            if (Junk > 0)
+            {
+                EjectOneJunk();
+            }  
+            this.Health -= 0.1f;
+        }
 	}
+
+    void OnCollisionEnter(Collision other)
+    {
+        if(other.transform.tag == "Player")
+        {
+            if (Junk > 0)
+            {
+                EjectOneJunk();
+            }
+        }
+    }
+
+    void EjectOneJunk()
+    {
+        this.Junk--;
+        if (PhotonNetwork.IsMasterClient)
+        {
+            PhotonNetwork.InstantiateSceneObject("Junk", new Vector3(transform.position.x, transform.position.y + JUNK_SPAWN_EJECT_HEIGHT_OFFSET, transform.position.z), Quaternion.identity, 0);
+        }
+        else
+        {
+            photonView.RPC("SpawnJunk", RpcTarget.MasterClient);
+        }
+    }
+
+    [PunRPC]
+    public void SpawnJunk()
+    {
+        PhotonNetwork.InstantiateSceneObject("Junk", new Vector3(transform.position.x, transform.position.y + JUNK_SPAWN_EJECT_HEIGHT_OFFSET, transform.position.z), Quaternion.identity, 0);
+    }
 
 	/// <summary>
 	/// MonoBehaviour method called once per frame for every Collider 'other' that is touching the trigger.
@@ -309,7 +352,8 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 			stream.SendNext(this.Health);
 			stream.SendNext(this.Junk);
 			stream.SendNext(this.IsWinner);
-		}
+            stream.SendNext(this.IsLoaded);
+        }
 		else
 		{
 			// Network player, receive data
@@ -317,7 +361,8 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 			this.Health = (float)stream.ReceiveNext();
 			this.Junk = (int)stream.ReceiveNext();
 			this.IsWinner = (bool)stream.ReceiveNext();
-		}
+            this.IsLoaded = (bool)stream.ReceiveNext();
+        }
 	}
 
 
