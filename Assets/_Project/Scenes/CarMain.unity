@@ -56257,7 +56257,7 @@ MonoBehaviour:
   EndGame: 0
   ThisIsMe: {fileID: 0}
   playerPrefabs:
-  - {fileID: 100042, guid: 0e7ee4df08df88c4880f43398f9ad2c2, type: 3}
+  - {fileID: 347166586760409962, guid: 645bbe0f61ab2894482f3425401b3d24, type: 3}
   music: {fileID: 8300000, guid: 808cc3e748e6e43e381a2133b8475bb8, type: 3}
   intenseMusic: {fileID: 8300000, guid: 74eb581d859a84d8d84ffe92ee22504d, type: 3}
   loseMusic: {fileID: 8300000, guid: c1fa7b2f2ac0d41f1a4fb1565cdc8229, type: 3}
