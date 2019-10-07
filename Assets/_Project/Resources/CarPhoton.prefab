@@ -6575,15 +6575,15 @@ MonoBehaviour:
   m_MaximumSteerAngle: 25
   m_SteerHelper: 1
   m_TractionControl: 0
-  m_FullTorqueOverAllWheels: 50000
+  m_FullTorqueOverAllWheels: 200000
   m_ReverseTorque: 10000
   m_MaxHandbrakeTorque: 100000000
   m_Downforce: 300
   m_SpeedType: 0
   m_Topspeed: 150
   m_RevRangeBoundary: 1
-  m_SlipLimit: 100
-  m_BrakeTorque: 200000
+  m_SlipLimit: 0.3
+  m_BrakeTorque: 400000
 --- !u!114 &11400024
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6683,6 +6683,8 @@ MonoBehaviour:
   CarUiRenderer: {fileID: 2300000}
   playerUiPrefab: {fileID: 170056, guid: 0d43061c6efb81b47917603c5d68a5df, type: 3}
   lasers: {fileID: 8838583983587598357}
+  boostPower: 100000
+  boostCoolDownTime: 10
 --- !u!114 &8164099769270464599
 MonoBehaviour:
   m_ObjectHideFlags: 0

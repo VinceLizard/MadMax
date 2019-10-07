@@ -8,10 +8,12 @@
 // <author>developer@exitgames.com</author>
 // --------------------------------------------------------------------------------------------------------------------
 
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using Photon.Pun;
 using Photon.Realtime;
+using UnityStandardAssets.Vehicles.Car;
 
 #pragma warning disable 649
 
@@ -56,22 +58,33 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 	[SerializeField]
 	private GameObject lasers;
 
-	//True, when the user is firing
-	bool IsFiring;
+    [SerializeField]
+    private float boostPower = 100;
 
-    //True when player will eject junk again
-    bool cooled = true;
+    [SerializeField]
+    private float boostCoolDownTime = 10;
 
-	#endregion
+    //True, when the user is firing
+    bool IsFiring;
+    Rigidbody rb;
+    CarController cc;
 
-	#region MonoBehaviour CallBacks
+    // True when player will eject junk again
+    bool junkEjectCooled = true;
 
-	/// <summary>
-	/// MonoBehaviour method called on GameObject by Unity during early initialization phase.
-	/// </summary>
-	public void Awake()
+    //use this when changin Boost status in UI
+    public bool BoostCooled { get; set; } = true;
+
+    #endregion
+
+    #region MonoBehaviour CallBacks
+
+    /// <summary>
+    /// MonoBehaviour method called on GameObject by Unity during early initialization phase.
+    /// </summary>
+    public void Awake()
 	{
-
+        
 		if (this.lasers == null)
 		{
 			Debug.LogError("<Color=Red><b>Missing</b></Color> Lasers Reference.", this);
@@ -86,6 +99,8 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 		if (photonView.IsMine)
 		{
 			LocalPlayerInstance = gameObject;
+            rb = gameObject.GetComponent<Rigidbody>();
+            cc = gameObject.GetComponent<CarController>();
 		}
 
 		// #Critical
@@ -236,10 +251,10 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 
     void EjectJunk()
     {
-        if (cooled)
+        if (junkEjectCooled)
         {
             int amount = Mathf.Min(Junk, AMOUNT_OF_JUNK_TO_EJECT);
-            cooled = false;
+            junkEjectCooled = false;
 
             for (int i = 0; i < amount; i++)
             {
@@ -254,7 +269,7 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
                 }
             }
             
-            Invoke("CoolIt", JUNK_EJECT_COOLDOWN);
+            Invoke("CoolJunk", JUNK_EJECT_COOLDOWN);
         }
     }
 
@@ -264,9 +279,9 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
         PhotonNetwork.InstantiateSceneObject("Junk", new Vector3(transform.position.x, transform.position.y + JUNK_SPAWN_EJECT_HEIGHT_OFFSET, transform.position.z), Quaternion.identity, 0);
     }
 
-    void CoolIt()
+    void CoolJunk()
     {
-        cooled = true;
+        junkEjectCooled = true;
     }
 
 	/// <summary>
@@ -352,6 +367,17 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 			}
 		}
 
+        if(Input.GetKeyDown("space"))
+        {
+            Debug.Log("BOOST");
+            if (BoostCooled)
+            {
+                BoostCooled = false;
+                rb.AddForce(transform.forward * boostPower, ForceMode.Impulse);
+                Invoke("BoostCooler", boostCoolDownTime);
+            }
+        }
+
 		if (Input.GetButtonUp("Fire1"))
 		{
 			if (this.IsFiring)
@@ -360,6 +386,11 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 			}
 		}
 	}
+
+    void BoostCooler()
+    {
+        BoostCooled = true;
+    }
 
 	#endregion
 

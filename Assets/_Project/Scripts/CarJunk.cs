@@ -14,10 +14,12 @@ public class CarJunk : MonoBehaviour
 	public bool IsCollected { get; set; }
 
     private Rigidbody rb;
+    private BoxCollider bc;
 
     private void Awake()
     {
         rb = gameObject.GetComponent<Rigidbody>();
+        bc = gameObject.GetComponent<BoxCollider>();
         EjectJunk();
     }
 
@@ -32,16 +34,20 @@ public class CarJunk : MonoBehaviour
         StopCoroutine("Pulsate");
         model.transform.localScale = Vector3.one;
         rb.isKinematic = false;
+        bc.isTrigger = false;
     }
 
     IEnumerator Pulsate()
     {
-        yield return new WaitForSeconds(1);
+        //when junk first spawns it shoots into the air an roles downhill
+        yield return new WaitForSeconds(.5f);
         while(rb.velocity.magnitude >= Mathf.Epsilon)
         {
             yield return null;
         }
 
+        //once junk is still, turn it kinematic and turn collider off (into trigger) and hover/pulse
+        bc.isTrigger = true;
         rb.isKinematic = true;
         Vector3 tp = transform.position;
         float yPlusOffset = transform.position.y + 2;
