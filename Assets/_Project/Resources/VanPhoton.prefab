@@ -5311,6 +5311,7 @@ MonoBehaviour:
   Health: 1
   Junk: 0
   IsWinner: 0
+  IsLoaded: 0
   CarUiRenderer: {fileID: 0}
   playerUiPrefab: {fileID: 170056, guid: 0d43061c6efb81b47917603c5d68a5df, type: 3}
   lasers: {fileID: 8874280032112864906}
