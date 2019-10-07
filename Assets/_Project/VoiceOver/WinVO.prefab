@@ -140,3 +140,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cfe5173c0a968a3478ee7647917c8381, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  voiceOvers:
+  - {fileID: 8300000, guid: 0f7eec74e306bbd4084d1c8e98afc35b, type: 3}
+  - {fileID: 8300000, guid: 1ac95f6f04a6a3c419417931bfdb9f08, type: 3}
+  - {fileID: 8300000, guid: ecfbca48b7aef0746a9b89f431c73ab5, type: 3}

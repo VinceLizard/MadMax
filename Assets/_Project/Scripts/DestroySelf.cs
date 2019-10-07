@@ -5,6 +5,8 @@ using UnityEngine;
 public class DestroySelf : MonoBehaviour
 {
     AudioSource thisAudio;
+    [SerializeField]
+    AudioClip[] voiceOvers;
     // Start is called before the first frame update
     void Start()
     {
@@ -14,7 +16,10 @@ public class DestroySelf : MonoBehaviour
     }
 
     IEnumerator DieAfterAudio() {
-        yield return new WaitForSeconds(1f);
+        var whichClip = Random.Range(0, voiceOvers.Length-1);
+        thisAudio.clip = voiceOvers[whichClip];
+        thisAudio.Play();
+        yield return new WaitForSeconds(.5f);
         while (thisAudio.isPlaying) {
             yield return new WaitForSeconds(.1f);
         }

@@ -42,7 +42,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 0d8b3501f545e2f4aa47d58db9564731, type: 3}
+  m_audioClip: {fileID: 0}
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
@@ -140,3 +140,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cfe5173c0a968a3478ee7647917c8381, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  voiceOvers:
+  - {fileID: 8300000, guid: c69cb2850e50f4d48ace0c4ebeb74662, type: 3}
+  - {fileID: 8300000, guid: ba11a4c4888729a4c91ead49c47f48a0, type: 3}
+  - {fileID: 8300000, guid: c75f1b2e88c50e94b87c4735701de6ac, type: 3}

@@ -34,6 +34,8 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 
 	public List<Transform> SpawnPoints;
     public bool EndGame = false;
+    [HideInInspector]
+    public GameObject ThisIsMe;
 	#endregion
 
 	#region Private Fields
@@ -49,6 +51,8 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
     AudioClip intenseMusic;
     [SerializeField]
     AudioClip loseMusic;
+    [SerializeField]
+    AudioClip winMusic;
     [SerializeField]
     GameObject endGameOrchestralHit;
     [SerializeField]
@@ -132,7 +136,7 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 				}
 				
 				// we're in a room. spawn a character for the local player. it gets synced by using PhotonNetwork.Instantiate
-				PhotonNetwork.Instantiate(this.playerPrefab.name, spawn.position, spawn.rotation, 0);
+				ThisIsMe = PhotonNetwork.Instantiate(this.playerPrefab.name, spawn.position, spawn.rotation, 0);
                 Instantiate(startVO, transform.position, transform.rotation);
                 thisAudio.clip = music;
                 thisAudio.Play();
@@ -177,7 +181,7 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
     // switch to endgame music
     IEnumerator StartEndGame() {
         audioTransitioning = true;
-        //Instantiate(endGameOrchestralHit, transform.position, transform.rotation);
+        Instantiate(endGameOrchestralHit, transform.position, transform.rotation);
         Instantiate(endGameVO, transform.position, transform.rotation);
         var t = 0f;
         while (t < musicFadeTimeInSeconds) {
@@ -207,6 +211,37 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
         thisAudio.clip = music;
         thisAudio.Play();
         audioTransitioning = false;
+        yield return null;
+    }
+
+    IEnumerator YouWin() {
+        Instantiate(winVO, transform.position, transform.rotation);
+        var t = 0f;
+        while (t < musicFadeTimeInSeconds) {
+            t += .1f;
+            thisAudio.volume = 1 - (t / musicFadeTimeInSeconds);
+            yield return new WaitForSeconds(.1f);
+        }
+        thisAudio.Stop();
+        thisAudio.volume = 1;
+        thisAudio.clip = winMusic;
+        thisAudio.Play();
+        yield return null;
+    }
+
+    IEnumerator YouLose() {
+        thisAudio.Stop();
+        Instantiate(loseVO, transform.position, transform.rotation);
+        var t = 0f;
+        while (t < musicFadeTimeInSeconds) {
+            t += .1f;
+            thisAudio.volume = 1 - (t / musicFadeTimeInSeconds);
+            yield return new WaitForSeconds(.1f);
+        }
+        thisAudio.Stop();
+        thisAudio.volume = 1;
+        thisAudio.clip = loseMusic;
+        thisAudio.Play();
         yield return null;
     }
 
@@ -291,7 +326,16 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 
 	#region Public Methods
 
-	public void LeaveRoom()
+    public void StartTheWin()
+    {
+        StartCoroutine(YouWin());
+    }
+
+    public void StarTheLose() {
+        StartCoroutine(YouLose());
+    }
+
+    public void LeaveRoom()
 	{
 		PhotonNetwork.LeaveRoom();
 	}
