@@ -44,7 +44,7 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 
 	[Tooltip("The prefab to use for representing the player")]
 	[SerializeField]
-	private GameObject playerPrefab;
+	private GameObject[] playerPrefabs;
     [SerializeField]
     AudioClip music;
     [SerializeField]
@@ -72,9 +72,10 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
     bool triggerEndGame = false;
     bool audioTransitioning = false;
     GameObject junkeParent;
+    GameObject myCar;
 
     // Set these in Inspector
-	public int RequiredToDepot = 50;
+    public int RequiredToDepot = 50;
 	public float JunkSpawnRadius = 50f;
 	public int MaxNumberOfJunkSpawns = 5000;
     public int MaxNumToSpawnPerJunkGroup = 50;
@@ -106,7 +107,7 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 			return;
 		}
 
-		if (playerPrefab == null)
+		if (playerPrefabs[0] == null)
 		{ // #Tip Never assume public properties of Components are filled up properly, always check and inform the developer of it.
 
 			Debug.LogError("<Color=Red><b>Missing</b></Color> playerPrefab Reference. Please set it up in GameObject 'Game Manager'", this);
@@ -134,9 +135,11 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 				{
 					spawn = SpawnPoints[offsetSpawn];
 				}
-				
-				// we're in a room. spawn a character for the local player. it gets synced by using PhotonNetwork.Instantiate
-				ThisIsMe = PhotonNetwork.Instantiate(this.playerPrefab.name, spawn.position, spawn.rotation, 0);
+
+
+                // we're in a room. spawn a character for the local player. it gets synced by using PhotonNetwork.Instantiate
+                myCar = playerPrefabs[Random.Range(0, playerPrefabs.Length)];
+                ThisIsMe = PhotonNetwork.Instantiate(this.myCar.name, spawn.position, spawn.rotation, 0);
                 Instantiate(startVO, transform.position, transform.rotation);
                 thisAudio.clip = music;
                 thisAudio.Play();
