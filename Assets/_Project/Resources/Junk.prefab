@@ -193,7 +193,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   model: {fileID: 7787667946936547618}
   scaleSpeed: 1
-  scaleAmount: 3
+  scaleAmount: 2
 --- !u!54 &-5117553422995242277
 Rigidbody:
   m_ObjectHideFlags: 0
