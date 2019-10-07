@@ -321,7 +321,7 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 			// notice we don't use on on GetbuttonUp() few lines down, because one can mouse down, move over a UI element and release, which would lead to not lower the isFiring Flag.
 			if (EventSystem.current.IsPointerOverGameObject())
 			{
-				return;
+				//return;
 			}
 
 			if (!this.IsFiring)
