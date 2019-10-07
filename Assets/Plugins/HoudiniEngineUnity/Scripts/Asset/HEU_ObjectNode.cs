@@ -215,6 +215,8 @@ namespace HoudiniEngineUnity
 			// Update the object transform
 			_objectTransform = ParentAsset.GetObjectTransform(session, ObjectID);
 
+			bool bApplyHAPITransform = false;
+
 			// Container for existing geo nodes that are still in use
 			List<HEU_GeoNode> geoNodesToKeep = new List<HEU_GeoNode>();
 			
@@ -231,14 +233,11 @@ namespace HoudiniEngineUnity
 
 				// Get the display geo info
 				HAPI_GeoInfo displayGeoInfo = new HAPI_GeoInfo();
-				if (session.GetDisplayGeoInfo(_objectInfo.nodeId, ref displayGeoInfo, false))
+				if (!session.GetDisplayGeoInfo(_objectInfo.nodeId, ref displayGeoInfo))
 				{
-					postCookGeoInfos.Add(displayGeoInfo);
+					return;
 				}
-				else
-				{
-					displayGeoInfo.nodeId = HEU_Defines.HEU_INVALID_NODE_ID;
-				}
+				postCookGeoInfos.Add(displayGeoInfo);
 
 				// Get editable nodes, cook em, then create geo nodes for them
 				HAPI_NodeId[] editableNodes = null;
@@ -293,6 +292,8 @@ namespace HoudiniEngineUnity
 				{
 					_geoNodes[i].DestroyAllData();
 				}
+
+				bApplyHAPITransform = true;
 			}
 			else
 			{
@@ -333,10 +334,16 @@ namespace HoudiniEngineUnity
 			// Overwrite the old list with new
 			_geoNodes = geoNodesToKeep;
 
-			// Updating the trasform is done in GenerateGeometry
+			// Update transform to all geo nodes whether they were created newly, or
+			// this object's transform has changed
+			if (bApplyHAPITransform || bForceUpdate || _objectInfo.hasTransformChanged)
+			{
+				// This has been moved to GenerateGeometry but kept here just in case.
+				//ApplyObjectTransformToGeoNodes();
+			}
 		}
 
-		public void GenerateGeometry(HEU_SessionBase session, bool bRebuild)
+		public void GenerateGeometry(HEU_SessionBase session)
 		{
 			// Volumes could come in as a geonode + part for each heightfield layer.
 			// Otherwise the other geo types can be done individually.
@@ -360,7 +367,7 @@ namespace HoudiniEngineUnity
 					// Each layer in the volume is retrieved as a volume part, in the display geo node. 
 					// But we need to handle all layers as 1 terrain output in Unity, with 1 height layer and 
 					// other layers as alphamaps.
-					geoNode.ProcessVolumeParts(session, volumeParts, bRebuild);
+					geoNode.ProcessVolumeParts(session, volumeParts);
 
 					// Clear the volume parts after processing since we are done with this set
 					volumeParts.Clear();
@@ -465,6 +472,15 @@ namespace HoudiniEngineUnity
 			}
 		}
 
+		public HEU_PartData GetPartWithID(HAPI_PartId partID)
+		{
+			foreach (HEU_GeoNode geoNode in _geoNodes)
+			{
+				geoNode.GetPartFromPartID(partID);
+			}
+			return null;
+		}
+
 		/// <summary>
 		/// Adds gameobjects that were output from this object.
 		/// </summary>
@@ -507,6 +523,18 @@ namespace HoudiniEngineUnity
 				}
 			}
 			
+			return null;
+		}
+
+		public HEU_GeoNode GetGeoNode(HAPI_NodeId nodeID)
+		{
+			foreach (HEU_GeoNode geoNode in _geoNodes)
+			{
+				if(geoNode.GeoID == nodeID)
+				{
+					return geoNode;
+				}
+			}
 			return null;
 		}
 
@@ -575,10 +603,9 @@ namespace HoudiniEngineUnity
 					int numParts = parts.Count;
 					for(int j = 0; j < numParts; ++j)
 					{
-						if(parts[j].ObjectInstancesBeenGenerated || parts[j].IsPartVolume())
+						if(parts[j].ObjectInstancesBeenGenerated)
 						{
-							// This prevents instances being created unnecessarily (e.g. part hasn't changed since last cook).
-							// Or for volumes that might have instance attributes.
+							// This prevents instances being created unnecessarily (e.g. part hasn't changed since last cook)
 							continue;
 						}
 
@@ -617,8 +644,7 @@ namespace HoudiniEngineUnity
 							{
 								bool bInstanced = false;
 								int[] scriptAttr = new int[unityInstanceAttrInfo.count];
-								HEU_GeneralUtility.GetAttribute(session, _geoNodes[i].GeoID, parts[j].PartID, unityInstanceAttrName, ref unityInstanceAttrInfo, ref scriptAttr, session.GetAttributeStringData);
-								if (unityInstanceAttrInfo.exists)
+								if(session.GetAttributeStringData(_geoNodes[i].GeoID, parts[j].PartID, unityInstanceAttrName, ref unityInstanceAttrInfo, scriptAttr, 0, unityInstanceAttrInfo.count))
 								{
 									string assetPath = HEU_SessionManager.GetString(scriptAttr[0]);
 									if (!string.IsNullOrEmpty(assetPath))
@@ -635,9 +661,8 @@ namespace HoudiniEngineUnity
 							}
 							else
 							{
-								// Other attribute owned types are unsupported.
-								// Originally had a warning here, but unnecessary as in some cases (e.g. heightfield attrbiutes) the
-								// attribute owner could be changed in HAPI.
+								// Other attribute owned types are unsupported
+								Debug.LogWarningFormat("Unsupported attribute owner {0} for attribute {1}", unityInstanceAttrInfo.owner, unityInstanceAttrName);
 							}
 						}
 						else

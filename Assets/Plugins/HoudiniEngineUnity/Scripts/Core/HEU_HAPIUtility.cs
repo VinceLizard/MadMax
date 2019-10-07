@@ -649,47 +649,6 @@ namespace HoudiniEngineUnity
 		}
 
 		/// <summary>
-		/// Creates a new HEU_GeoSync in scene, opens the file select panel, and starts the file load.
-		/// </summary>
-		/// <param name="session">A Houdini session to use, or null if to use default or create one.</param>
-		/// <returns>The new gameobject with HEU_GeoSync as a component.</returns>
-		public static GameObject LoadGeoWithNewGeoSync(HEU_SessionBase session = null)
-		{
-#if UNITY_EDITOR
-			string filePattern = "bgeo,bgeo.sc";
-			string filePath = EditorUtility.OpenFilePanel("Select Geo File To Load", "", filePattern);
-			if (string.IsNullOrEmpty(filePath))
-			{
-				return null;
-			}
-
-			if (session == null)
-			{
-				session = HEU_SessionManager.GetOrCreateDefaultSession();
-			}
-			if (!session.IsSessionValid())
-			{
-				Debug.LogWarning("Invalid Houdini Engine session!");
-				return null;
-			}
-
-			// This will be the root GameObject.
-			GameObject rootGO = new GameObject();
-			HEU_GeoSync geoSync = rootGO.AddComponent<HEU_GeoSync>();
-
-			// Set the game object's name to the asset's name
-			rootGO.name = string.Format("{0}{1}", "GeoSync", rootGO.GetInstanceID());
-
-			geoSync._filePath = filePath;
-			geoSync.StartSync();
-
-			return rootGO;
-#else
-			return null;
-#endif
-		}
-
-		/// <summary>
 		/// Destroy children of the given transform. Does not destroy inTransform itself.
 		/// </summary>
 		/// <param name="inTransform">Tranform whose children are to be destroyed</param>
@@ -869,7 +828,8 @@ namespace HoudiniEngineUnity
 			Vector3 euler = quaternion.eulerAngles;
 			euler.y = -euler.y;
 			euler.z = -euler.z;
-			unityTransform.localRotation = unityTransform.localRotation * Quaternion.Euler(euler);
+			Vector3 rotation = unityTransform.localRotation.eulerAngles;
+			unityTransform.localRotation = Quaternion.Euler(rotation + euler);
 
 			// No inversion required for scale
 			// We can't directly set global scale in Unity, but the proper workaround is to unparent, set scale, then reparent
@@ -1177,7 +1137,7 @@ namespace HoudiniEngineUnity
 					// This object has children, so use GetComposedObjectList to get list of HAPI_ObjectInfos
 
 					objectInfos = new HAPI_ObjectInfo[objectCount];
-					if (!HEU_SessionManager.GetComposedObjectListMemorySafe(session, nodeInfo.parentId, objectInfos, 0, objectCount))
+					if (!session.GetComposedObjectList(nodeInfo.parentId, objectInfos, 0, objectCount))
 					{
 						return false;
 					}

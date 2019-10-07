@@ -263,6 +263,7 @@ namespace HoudiniEngineUnity
 				return false;
 			}
 
+			//HEU_PluginStorage.SaveSessionData(_sessionData);
 			Debug.LogFormat("Houdini Engine: Created Socket session with ID {0}.", _sessionData.SessionID);
 
 			// Make sure API version matches with plugin version
@@ -363,6 +364,7 @@ namespace HoudiniEngineUnity
 				return false;
 			}
 
+			//HEU_PluginStorage.SaveSessionData(_sessionData);
 			Debug.LogFormat("Houdini Engine: Created Pipe session with ID {0}.", _sessionData.SessionID);
 
 			// Make sure API version matches with plugin version
@@ -640,7 +642,7 @@ namespace HoudiniEngineUnity
 
 				string statusMessage = GetStatusString(HAPI_StatusType.HAPI_STATUS_CALL_RESULT, HAPI_StatusVerbosity.HAPI_STATUSVERBOSITY_WARNINGS);
 				string errorMsg = string.Format("{0} : {1}\nIf session is invalid, try restarting Unity.", prependMsg, statusMessage);
-				SetSessionErrorMsg(errorMsg, bLogError);
+				SetSessionErrorMsg(errorMsg, LogErrorOverride && bLogError); ;
 
 				if (ThrowErrorOverride && bThrowError)
 				{
@@ -662,8 +664,7 @@ namespace HoudiniEngineUnity
 		private void GetCookOptions(ref HAPI_CookOptions cookOptions)
 		{
 			// In keeping consistency with other plugins, we don't support splitting by groups or attributes.
-			// Though allowing it now behind an option.
-			cookOptions.splitGeosByGroup = HEU_PluginSettings.CookOptionSplitGeosByGroup;
+			cookOptions.splitGeosByGroup = false;
 			cookOptions.splitGeosByAttribute = false;
 			cookOptions.splitAttrSH = 0;
 			cookOptions.splitPointsByVertexAttributes = false;
@@ -718,13 +719,6 @@ namespace HoudiniEngineUnity
 				}
 			}
 			HandleStatusResult(result, "Get Server Environment String", true, true);
-			return (result == HAPI_Result.HAPI_RESULT_SUCCESS);
-		}
-
-		public override bool GetServerEnvVarCount(out int env_count)
-		{
-			HAPI_Result result = HEU_HAPIImports.HAPI_GetServerEnvVarCount(ref _sessionData._HAPISession, out env_count);
-			HandleStatusResult(result, "Get Server Environment Var Count", true, true);
 			return (result == HAPI_Result.HAPI_RESULT_SUCCESS);
 		}
 
@@ -914,14 +908,12 @@ namespace HoudiniEngineUnity
 		/// </summary>
 		/// <param name="nodeID">ID of the node to cook</param>
 		/// <param name="bCookTemplatedGeos">Whether to recursively cook all templated geos or not</param>
-		/// <param name="bSplitGeosByGroup">Whether to split the geometry by groups. Not recommended to use, but allowing in specific situations.</param>
 		/// <returns>True if successfully cooked the node</returns>
-		public override bool CookNode(HAPI_NodeId nodeID, bool bCookTemplatedGeos, bool bSplitGeosByGroup)
+		public override bool CookNode(HAPI_NodeId nodeID, bool bCookTemplatedGeos)
 		{
 			HAPI_CookOptions cookOptions = new HAPI_CookOptions();
 			GetCookOptions(ref cookOptions);
 			cookOptions.cookTemplatedGeos = bCookTemplatedGeos;
-			cookOptions.splitGeosByGroup |= bSplitGeosByGroup;
 			//float cookTime = Time.realtimeSinceStartup;
 			HAPI_Result result = HEU_HAPIImports.HAPI_CookNode(ref _sessionData._HAPISession, nodeID, ref cookOptions);
 			//Debug.Log("Cook time: " + (Time.realtimeSinceStartup - cookTime));
@@ -1267,10 +1259,10 @@ namespace HoudiniEngineUnity
 		/// <param name="nodeID">Object node ID</param>
 		/// <param name="geoInfo">Geo info to populate</param>
 		/// <returns>True if successfully queried the geo info</returns>
-		public override bool GetDisplayGeoInfo(HAPI_NodeId nodeID, ref HAPI_GeoInfo geoInfo, bool bLogError)
+		public override bool GetDisplayGeoInfo(HAPI_NodeId nodeID, ref HAPI_GeoInfo geoInfo)
 		{
 			HAPI_Result result = HEU_HAPIImports.HAPI_GetDisplayGeoInfo(ref _sessionData._HAPISession, nodeID, out geoInfo);
-			HandleStatusResult(result, "Getting Display Geo Info", false, bLogError);
+			HandleStatusResult(result, "Getting Display Geo Info", false, true);
 			return (result == HAPI_Result.HAPI_RESULT_SUCCESS);
 		}
 
@@ -1465,10 +1457,10 @@ namespace HoudiniEngineUnity
 			return (result == HAPI_Result.HAPI_RESULT_SUCCESS);
 		}
 
-		public override bool GetInstanceTransformsOnPart(HAPI_NodeId nodeID, HAPI_PartId partID, HAPI_RSTOrder rstOrder, [Out] HAPI_Transform[] transformsArray, int start, int length)
+		public override bool GetInstanceTransforms(HAPI_NodeId nodeID, HAPI_RSTOrder rstOrder, [Out] HAPI_Transform[] transformsArray, int start, int length)
 		{
-			HAPI_Result result = HEU_HAPIImports.HAPI_GetInstanceTransformsOnPart(ref _sessionData._HAPISession, nodeID, partID, rstOrder, transformsArray, start, length);
-			HandleStatusResult(result, "Getting Instance Transforms On Part", false, true);
+			HAPI_Result result = HEU_HAPIImports.HAPI_GetInstanceTransforms(ref _sessionData._HAPISession, nodeID, rstOrder, transformsArray, start, length);
+			HandleStatusResult(result, "Getting Instance Transforms", false, true);
 			return (result == HAPI_Result.HAPI_RESULT_SUCCESS);
 		}
 

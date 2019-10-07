@@ -26,7 +26,6 @@
 
 using UnityEngine;
 using UnityEditor;
-using System.Collections.Generic;
 
 namespace HoudiniEngineUnity
 {
@@ -110,10 +109,10 @@ namespace HoudiniEngineUnity
 
 			EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
-			string labelName = inputNode.LabelName;
-			if (!string.IsNullOrEmpty(labelName))
+			string inputName = inputNode.InputName;
+			if (!string.IsNullOrEmpty(inputName))
 			{
-				EditorGUILayout.LabelField(labelName);
+				EditorGUILayout.LabelField(inputName);
 			}
 
 			EditorGUI.indentLevel++;
@@ -143,20 +142,15 @@ namespace HoudiniEngineUnity
 
 						HEU_EditorUI.DrawSeparator();
 
-						EditorGUILayout.LabelField(string.Format("{0} input objects", inputCount));
-
 						using (var hs1 = new EditorGUILayout.HorizontalScope())
 						{
-							if (GUILayout.Button("Add Slot"))
+							EditorGUILayout.LabelField(string.Format("{0} input objects", inputCount));
+
+							if (GUILayout.Button("Add"))
 							{
 								inputAssetsProperty.InsertArrayElementAtIndex(inputCount);
 
 								bSkipElements = true;
-							}
-
-							if (GUILayout.Button("Add Selection"))
-							{
-								HEU_SelectionWindow.ShowWindow(inputNode.HandleSelectedObjectsForInputHDAs, typeof(HEU_HoudiniAssetRoot));
 							}
 
 							if (GUILayout.Button("Clear"))
@@ -222,25 +216,21 @@ namespace HoudiniEngineUnity
 					SerializedProperty inputObjectsProperty = inputNode._uiCache._inputObjectsProperty;
 					if (inputObjectsProperty != null)
 					{
+						int inputCount = inputObjectsProperty.arraySize;
 						bool bSkipElements = false;
 
 						HEU_EditorUI.DrawSeparator();
 
-						EditorGUILayout.LabelField(string.Format("{0} input objects", inputObjectsProperty.arraySize));
-
 						using (var hs1 = new EditorGUILayout.HorizontalScope())
 						{
-							if (GUILayout.Button("Add Slot"))
+							EditorGUILayout.LabelField(string.Format("{0} input objects", inputCount));
+
+							if (GUILayout.Button("Add"))
 							{
-								inputObjectsProperty.arraySize++;
-								FixUpScaleProperty(inputObjectsProperty, inputObjectsProperty.arraySize - 1);
+								inputObjectsProperty.InsertArrayElementAtIndex(inputCount);
+								FixUpScaleProperty(inputObjectsProperty, inputCount);
 
 								bSkipElements = true;
-							}
-
-							if (GUILayout.Button("Add Selection"))
-							{
-								HEU_SelectionWindow.ShowWindow(inputNode.HandleSelectedObjectsForInputObjects, typeof(GameObject));
 							}
 
 							if (GUILayout.Button("Clear"))
@@ -254,7 +244,6 @@ namespace HoudiniEngineUnity
 						{
 							using (var vs1 = new EditorGUILayout.VerticalScope())
 							{
-								int inputCount = inputObjectsProperty.arraySize;
 								for (int i = 0; i < inputCount; ++i)
 								{
 									using (var hs2 = new EditorGUILayout.HorizontalScope())

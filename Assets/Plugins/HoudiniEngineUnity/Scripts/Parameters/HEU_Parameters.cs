@@ -516,7 +516,7 @@ namespace HoudiniEngineUnity
 
 							if (newParameter._paramInputNode == null)
 							{
-								newParameter._paramInputNode = HEU_InputNode.CreateSetupInput(parentAsset.AssetInfo.nodeId, 0, newParameter._name, newParameter._labelName, HEU_InputNode.InputNodeType.PARAMETER, parentAsset);
+								newParameter._paramInputNode = HEU_InputNode.CreateSetupInput(parentAsset.AssetInfo.nodeId, 0, newParameter._labelName, HEU_InputNode.InputNodeType.PARAMETER, parentAsset);
 								if (newParameter._paramInputNode != null)
 								{
 									newParameter._paramInputNode.ParamName = newParameter._name;
@@ -864,7 +864,7 @@ namespace HoudiniEngineUnity
 			return false;
 		}
 
-		public bool UploadValuesToHoudini(HEU_SessionBase session, HEU_HoudiniAsset parentAsset, bool bDoCheck = true, bool bForceUploadInputs = false)
+		public bool UploadValuesToHoudini(HEU_SessionBase session, HEU_HoudiniAsset parentAsset, bool bDoCheck = true)
 		{
 			if (!AreParametersValid())
 			{
@@ -989,7 +989,7 @@ namespace HoudiniEngineUnity
 					}
 					case HAPI_ParmType.HAPI_PARMTYPE_NODE:
 					{
-						if (!bDoCheck || (parameterData._paramInputNode.RequiresUpload) || bForceUploadInputs)
+						if (!bDoCheck || (parameterData._paramInputNode.RequiresUpload))
 						{
 							parameterData._paramInputNode.UploadInput(session);
 						}

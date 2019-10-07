@@ -244,12 +244,12 @@ MonoBehaviour:
   _checkParameterChangeForCook: 0
   _skipCookCheck: 0
   _uploadParameters: 1
-  _forceUploadInputs: 0
   _cookStatus: 0
   _lastCookResult: 0
   _isCookingAssetReloaded: 0
   _sessionID: 1381331344
   _uiLocked: 1
+  _showInstanceInputs: 1
   _showHDAOptions: 0
   _showGenerateSection: 1
   _showBakeSection: 1
@@ -258,7 +258,6 @@ MonoBehaviour:
   _showInputNodesSection: 0
   _showToolsSection: 0
   _showTerrainSection: 0
-  _instanceInputUIState: {fileID: 0}
   _reloadEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -289,7 +288,6 @@ MonoBehaviour:
   _ignoreNonDisplayNodes: 0
   _generateMeshUsingPoints: 0
   _useLODGroups: 1
-  _splitGeosByGroup: 0
   _curveEditorEnabled: 1
   _curves: []
   _curveDrawCollision: 0

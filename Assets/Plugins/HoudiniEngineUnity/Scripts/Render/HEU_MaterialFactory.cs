@@ -92,8 +92,8 @@ namespace HoudiniEngineUnity
 
 				if (bWriteToFile && !string.IsNullOrEmpty(assetCacheFolderPath))
 				{
-					string materialFileName = materialName + HEU_Defines.HEU_EXT_MAT;
-					HEU_AssetDatabase.CreateObjectInAssetCacheFolder(material, assetCacheFolderPath, HEU_Defines.HEU_FOLDER_MATERIALS, materialFileName, typeof(Material));
+					string materialFileName = materialName + ".mat";
+					HEU_AssetDatabase.CreateObjectInAssetCacheFolder(material, assetCacheFolderPath, materialFileName, typeof(Material));
 				}
 			}
 			else
@@ -110,9 +110,9 @@ namespace HoudiniEngineUnity
 
 		public static void WriteMaterialToAssetCache(Material material, string assetCacheFolderPath, string materialName)
 		{
-			string materialFileName = materialName + HEU_Defines.HEU_EXT_MAT;
+			string materialFileName = materialName + ".mat";
 			//Debug.LogFormat("Writing material {0} out to {1}", materialFileName, assetCacheFolderPath);
-			HEU_AssetDatabase.CreateObjectInAssetCacheFolder(material, assetCacheFolderPath, HEU_Defines.HEU_FOLDER_MATERIALS, materialFileName, typeof(Material));
+			HEU_AssetDatabase.CreateObjectInAssetCacheFolder(material, assetCacheFolderPath, materialFileName, typeof(Material));
 		}
 
 		public static bool DoesMaterialExistInAssetCache(Material material)
@@ -318,10 +318,6 @@ namespace HoudiniEngineUnity
 			if(materialPath.StartsWith(HEU_Defines.DEFAULT_UNITY_BUILTIN_RESOURCES))
 			{
 				return HEU_AssetDatabase.LoadUnityAssetFromUniqueAssetPath<Material>(materialPath);
-			}
-			else if (materialPath.StartsWith("Packages/"))
-			{
-				return HEU_AssetDatabase.LoadAssetAtPath(materialPath, typeof(Material)) as Material;
 			}
 
 			string relativePath = materialPath;
