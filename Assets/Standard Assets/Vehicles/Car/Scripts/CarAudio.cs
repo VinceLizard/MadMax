@@ -93,7 +93,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 crashAudioSource.minDistance = 5;
                 crashAudioSource.maxDistance = maxRolloffDistance;
                 crashAudioSource.dopplerLevel = 0;
-                StartCoroutine("CrashingSounds");
+                
             }
 
             //Setup junk pickup audiosource
@@ -127,7 +127,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 m_HighDecel = SetUpEngineAudioSource(highDecelClip);                
             }
 
-
+            StartCoroutine("CrashingSounds");
 
             // flag that we have started the sounds playing
             m_StartedSound = true;
