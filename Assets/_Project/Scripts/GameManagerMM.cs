@@ -25,8 +25,8 @@ using System.Collections.Generic;
 /// </summary>
 public class GameManagerMM : MonoBehaviourPunCallbacks
 {
-    const int MAX_NUM_TO_SPAWN_PER_SECOND = 5;
-    const float COOLDOWN = 1.0f;
+    
+    
 
     #region Public Fields
 
@@ -71,13 +71,23 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 
     bool triggerEndGame = false;
     bool audioTransitioning = false;
+    GameObject junkeParent;
 
-	public int RequiredToDepot = 10;
-	public float JunkSpawnRadius = 1f;
-	public int NumberOfJunkSpawns = 500;
-	#endregion
+    // Set these in Inspector
+	public int RequiredToDepot = 50;
+	public float JunkSpawnRadius = 50f;
+	public int MaxNumberOfJunkSpawns = 5000;
+    public int MaxNumToSpawnPerJunkGroup = 50;
+    public float CooldownBeforeNextJunkSpawn = 3.0f;
 
-	#region MonoBehaviour CallBacks
+    #endregion
+
+    #region MonoBehaviour CallBacks
+
+    void Awake()
+    {
+        junkeParent = GameObject.Find("JunkParent");
+    }
 
 	/// <summary>
 	/// MonoBehaviour method called on GameObject by Unity during initialization phase.
@@ -240,40 +250,41 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 
     // Spawn junk
     IEnumerator SpawnCoro()
-	{
-		while (true)
-		{
-			if (PhotonNetwork.IsMasterClient)
-			{
-                Debug.Log("Trying to spawn");
-				int amountToSpawn = 0;
-				while (
-					(amountToSpawn = Mathf.Min(MAX_NUM_TO_SPAWN_PER_SECOND, NumberOfJunkSpawns - GameObject.FindGameObjectsWithTag("Junk").Length)) 
-					 > 0
-				)
-				{
-					for (int i = 0; i < amountToSpawn; i++)
-					{
-						var v = Random.insideUnitCircle * JunkSpawnRadius;
-						var ray = new Ray(new Vector3(v.x, 500.0f, v.y), Vector3.down);
-						RaycastHit hit;
-						if (Physics.Raycast(ray, out hit, 2000.0f, LayerMask.GetMask(new string[1] { "Terrain" })))
-						{
-                            Debug.Log("Spawning");
-							PhotonNetwork.InstantiateSceneObject("Junk", new Vector3(hit.point.x, hit.point.y + 1, hit.point.z), Quaternion.identity, 0);
-						}
-					}
-					yield return new WaitForSeconds(1.0f);
-				}
-			}
-			yield return new WaitForSeconds(COOLDOWN);
-		}
-	}
+    {
+        int amountToSpawn;
+        while (true)
+        {
+            if (PhotonNetwork.IsMasterClient)
+            {
 
-	#endregion
+                int numberspawed = GameObject.FindGameObjectsWithTag("Junk").Length;
+                amountToSpawn = Mathf.Min(MaxNumToSpawnPerJunkGroup, (MaxNumberOfJunkSpawns - GameObject.FindGameObjectsWithTag("Junk").Length));
+                Debug.Log("Starting to spawn a group of" + amountToSpawn + " junk.");
+                while (amountToSpawn > 0)
+                {
+                    var v = Random.insideUnitCircle * JunkSpawnRadius;
+                    var ray = new Ray(new Vector3(v.x, 500.0f, v.y), Vector3.down);
+                    RaycastHit hit;
+                    if (Physics.Raycast(ray, out hit, 2000.0f, LayerMask.GetMask(new string[1] { "Terrain" })))
+                    {
+                        Debug.Log("Spawning");
+                        GameObject go = PhotonNetwork.InstantiateSceneObject("Junk", new Vector3(hit.point.x, hit.point.y + 1, hit.point.z), Quaternion.identity, 0);
+                        go.transform.SetParent(junkeParent.transform);
+                        amountToSpawn--;
+                    }
 
-	#region Photon Callbacks
-	/*
+                    yield return new WaitForSeconds(.1f);
+                }
+
+            }
+            yield return new WaitForSeconds(CooldownBeforeNextJunkSpawn);
+        }
+    }
+
+    #endregion
+
+    #region Photon Callbacks
+    /*
 		/// <summary>
 		/// Called when a Photon Player got connected. We need to then load a bigger scene.
 		/// </summary>
@@ -306,10 +317,10 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 			}
 		}
         */
-	/// <summary>
-	/// Called when the local player left the room. We need to load the launcher scene.
-	/// </summary>
-	public override void OnLeftRoom()
+    /// <summary>
+    /// Called when the local player left the room. We need to load the launcher scene.
+    /// </summary>
+    public override void OnLeftRoom()
 	{
             SceneManager.LoadScene("CarLauncher");
 	}
