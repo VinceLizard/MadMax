@@ -75,6 +75,8 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
     //use this when changin Boost status in UI
     public bool BoostCooled { get; set; } = true;
 
+    RectTransform rt;
+
     #endregion
 
     #region MonoBehaviour CallBacks
@@ -146,6 +148,7 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 			Debug.LogWarning("<Color=Red><b>Missing</b></Color> PlayerUiPrefab reference on player Prefab.", this);
 		}
 
+        rt = GameManagerMM.Instance.boostBar.GetComponent<RectTransform>();
 
 #if UNITY_5_4_OR_NEWER
 		// Unity 5.4 has a new scene management. register a method to call CalledOnLevelWasLoaded.

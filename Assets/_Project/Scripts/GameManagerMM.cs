@@ -69,6 +69,9 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
     float musicFadeTimeInSeconds = 2f;
     AudioSource thisAudio;
 
+
+    public GameObject boostBar;
+
     bool triggerEndGame = false;
     bool audioTransitioning = false;
     GameObject junkeParent;
