@@ -12,9 +12,11 @@ public class CarJunk : MonoBehaviour
 	public float scaleSpeed = 1.0f;
 	public float scaleAmount;
 	public bool IsCollected { get; set; }
+    
 
     private Rigidbody rb;
     private BoxCollider bc;
+
 
     private void Awake()
     {
@@ -62,7 +64,8 @@ public class CarJunk : MonoBehaviour
 
 	public void Collect()
 	{
-		var pv = this.GetComponent<PhotonView>();
+       
+        var pv = this.GetComponent<PhotonView>();
 		if (pv.IsMine)
 		{
 			PhotonNetwork.Destroy(this.gameObject);

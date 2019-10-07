@@ -65,15 +65,18 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
     private float boostCoolDownTime = 10;
 
     //True, when the user is firing
-    bool IsFiring;
+    //bool IsFiring;
     Rigidbody rb;
     CarController cc;
+    CarAudio carAudio;
 
     // True when player will eject junk again
     bool junkEjectCooled = true;
 
     //use this when changin Boost status in UI
     public bool BoostCooled { get; set; } = true;
+
+    RectTransform rt;
 
     #endregion
 
@@ -93,10 +96,11 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 		{
 			this.lasers.SetActive(false);
 		}
+        carAudio = gameObject.GetComponent<CarAudio>();
 
-		// #Important
-		// used in GameManager.cs: we keep track of the localPlayer instance to prevent instanciation when levels are synchronized
-		if (photonView.IsMine)
+        // #Important
+        // used in GameManager.cs: we keep track of the localPlayer instance to prevent instanciation when levels are synchronized
+        if (photonView.IsMine)
 		{
 			LocalPlayerInstance = gameObject;
             rb = gameObject.GetComponent<Rigidbody>();
@@ -146,6 +150,7 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 			Debug.LogWarning("<Color=Red><b>Missing</b></Color> PlayerUiPrefab reference on player Prefab.", this);
 		}
 
+        rt = GameManagerMM.Instance.boostBar.GetComponent<RectTransform>();
 
 #if UNITY_5_4_OR_NEWER
 		// Unity 5.4 has a new scene management. register a method to call CalledOnLevelWasLoaded.
@@ -178,11 +183,11 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 		{
 			this.ProcessInputs();
 
-			if (this.Health <= 0f)
+			/*if (this.Health <= 0f)
 			{
 
 				GameManagerMM.Instance.LeaveRoom();
-			}
+			}*/
 		}
 
         /*
@@ -209,8 +214,10 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 		var junk = other.GetComponentInParent<CarJunk>();
 		if (junk != null && !junk.IsCollected)
 		{
-			junk.IsCollected = true;
+            carAudio.PlayPickupSound();
+            junk.IsCollected = true;
 			junk.Collect();
+            
 			this.Junk += 1;
 
             if(GameManagerMM.Instance.RequiredToDepot <= this.Junk)

@@ -39,6 +39,7 @@ namespace UnityStandardAssets.Vehicles.Car
         public AudioClip highDecelClip;                                             // Audio clip for high deceleration
         public AudioClip gravelClip;                                               // Audio clip for gravel sound when moving
         public AudioClip[] crashAudioClips;
+        public AudioClip[] junkPickupClips;
         public float pitchMultiplier = 1f;                                          // Used for altering the pitch of audio clips
         public float lowPitchMin = 1f;                                              // The lowest possible pitch for the low sounds
         public float lowPitchMax = 6f;                                              // The highest possible pitch for the low sounds
@@ -53,6 +54,7 @@ namespace UnityStandardAssets.Vehicles.Car
         private AudioSource m_HighDecel; // Source for the high deceleration sounds
         private AudioSource gravelAudioSource; // Source for gravel sound when moving
         private AudioSource crashAudioSource;
+        private AudioSource junkPickupAudioSource;
         private AudioMixer mixer;
 
         private bool m_StartedSound; // flag for knowing if we have started sounds
@@ -64,6 +66,49 @@ namespace UnityStandardAssets.Vehicles.Car
         private void Awake()
         {
             mixer = Resources.Load("MMMixer") as AudioMixer;
+
+            //Setup gravel audiosource
+            if (gravelClip != null)
+            {
+                gravelAudioSource = gameObject.AddComponent<AudioSource>();
+                gravelAudioSource.outputAudioMixerGroup = mixer.FindMatchingGroups("Car Engine")[0];
+                gravelAudioSource.playOnAwake = false;
+                gravelAudioSource.clip = gravelClip;
+                gravelAudioSource.volume = .2f;
+                gravelAudioSource.loop = true;
+                gravelAudioSource.minDistance = 5;
+                gravelAudioSource.maxDistance = maxRolloffDistance;
+                gravelAudioSource.dopplerLevel = 0;
+            }
+
+            //Setup gravel audiosource
+            if (crashAudioClips[0] != null)
+            {
+                crashAudioSource = gameObject.AddComponent<AudioSource>();
+                crashAudioSource.outputAudioMixerGroup = mixer.FindMatchingGroups("Crash")[0];
+                crashAudioSource.playOnAwake = false;
+                crashAudioSource.clip = crashAudioClips[Random.Range(0, crashAudioClips.Length)];
+                crashAudioSource.volume = 1f;
+                crashAudioSource.loop = false;
+                crashAudioSource.minDistance = 5;
+                crashAudioSource.maxDistance = maxRolloffDistance;
+                crashAudioSource.dopplerLevel = 0;
+                StartCoroutine("CrashingSounds");
+            }
+
+            //Setup junk pickup audiosource
+            if (junkPickupClips[0] != null)
+            {
+                junkPickupAudioSource = gameObject.AddComponent<AudioSource>();
+                junkPickupAudioSource.outputAudioMixerGroup = mixer.FindMatchingGroups("Pick Up Junk")[0];
+                junkPickupAudioSource.playOnAwake = false;
+                junkPickupAudioSource.clip = junkPickupClips[Random.Range(0, junkPickupClips.Length)];
+                junkPickupAudioSource.volume = 1f;
+                junkPickupAudioSource.loop = false;
+                junkPickupAudioSource.minDistance = 5;
+                junkPickupAudioSource.maxDistance = maxRolloffDistance;
+                junkPickupAudioSource.dopplerLevel = 0;
+            }
         }
 
         private void StartSound()
@@ -82,32 +127,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 m_HighDecel = SetUpEngineAudioSource(highDecelClip);                
             }
 
-            //Setup gravel audiosource
-            if (gravelClip != null)
-            {
-                gravelAudioSource = gameObject.AddComponent<AudioSource>();
-                gravelAudioSource.outputAudioMixerGroup = mixer.FindMatchingGroups("Car Engine")[0];
-                gravelAudioSource.clip = gravelClip;
-                gravelAudioSource.volume = .2f;
-                gravelAudioSource.loop = true;
-                gravelAudioSource.minDistance = 5;
-                gravelAudioSource.maxDistance = maxRolloffDistance;
-                gravelAudioSource.dopplerLevel = 0;
-            }
 
-            //Setup gravel audiosource
-            if (crashAudioClips[0] != null)
-            {
-                crashAudioSource = gameObject.AddComponent<AudioSource>();
-                crashAudioSource.outputAudioMixerGroup = mixer.FindMatchingGroups("Crash")[0];
-                crashAudioSource.clip = crashAudioClips[Random.Range(0,crashAudioClips.Length)];
-                crashAudioSource.volume = 1f;
-                crashAudioSource.loop = false;
-                crashAudioSource.minDistance = 5;
-                crashAudioSource.maxDistance = maxRolloffDistance;
-                crashAudioSource.dopplerLevel = 0;
-                StartCoroutine("CrashingSounds");
-            }
 
             // flag that we have started the sounds playing
             m_StartedSound = true;
@@ -131,6 +151,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 }          
             }
         }
+
 
         private void StopSound()
         {
@@ -254,6 +275,11 @@ namespace UnityStandardAssets.Vehicles.Car
             return source;
         }
 
+        public void PlayPickupSound()
+        {
+            junkPickupAudioSource.clip = junkPickupClips[Random.Range(0, junkPickupClips.Length)];
+            this.junkPickupAudioSource.Play();
+        }
 
         // unclamped versions of Lerp and Inverse Lerp, to allow value to exceed the from-to range
         private static float ULerp(float from, float to, float value)
