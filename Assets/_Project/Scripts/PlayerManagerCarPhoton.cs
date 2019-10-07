@@ -23,6 +23,8 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 {
 
     private static float JUNK_SPAWN_EJECT_HEIGHT_OFFSET = 7;
+    private static int JUNK_EJECT_COOLDOWN = 5;
+    private static int AMOUNT_OF_JUNK_TO_EJECT = 10;
 
     #region Public Fields
 
@@ -56,6 +58,10 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 
 	//True, when the user is firing
 	bool IsFiring;
+
+    //True when player will eject junk again
+    bool cooled = true;
+
 	#endregion
 
 	#region MonoBehaviour CallBacks
@@ -211,7 +217,7 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 		{
             if (Junk > 0)
             {
-                EjectOneJunk();
+                EjectJunk();
             }  
             this.Health -= 0.1f;
         }
@@ -223,21 +229,32 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
         {
             if (Junk > 0)
             {
-                EjectOneJunk();
+                EjectJunk();
             }
         }
     }
 
-    void EjectOneJunk()
+    void EjectJunk()
     {
-        this.Junk--;
-        if (PhotonNetwork.IsMasterClient)
+        if (cooled)
         {
-            PhotonNetwork.InstantiateSceneObject("Junk", new Vector3(transform.position.x, transform.position.y + JUNK_SPAWN_EJECT_HEIGHT_OFFSET, transform.position.z), Quaternion.identity, 0);
-        }
-        else
-        {
-            photonView.RPC("SpawnJunk", RpcTarget.MasterClient);
+            int amount = Mathf.Min(Junk, AMOUNT_OF_JUNK_TO_EJECT);
+            cooled = false;
+
+            for (int i = 0; i < amount; i++)
+            {
+                this.Junk--;
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    PhotonNetwork.InstantiateSceneObject("Junk", new Vector3(transform.position.x, transform.position.y + JUNK_SPAWN_EJECT_HEIGHT_OFFSET, transform.position.z), Quaternion.identity, 0);
+                }
+                else
+                {
+                    photonView.RPC("SpawnJunk", RpcTarget.MasterClient);
+                }
+            }
+            
+            Invoke("CoolIt", JUNK_EJECT_COOLDOWN);
         }
     }
 
@@ -245,6 +262,11 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
     public void SpawnJunk()
     {
         PhotonNetwork.InstantiateSceneObject("Junk", new Vector3(transform.position.x, transform.position.y + JUNK_SPAWN_EJECT_HEIGHT_OFFSET, transform.position.z), Quaternion.identity, 0);
+    }
+
+    void CoolIt()
+    {
+        cooled = true;
     }
 
 	/// <summary>
