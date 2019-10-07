@@ -31,6 +31,7 @@ public class CarJunk : MonoBehaviour
     {
         StopCoroutine("Pulsate");
         model.transform.localScale = Vector3.one;
+        rb.isKinematic = false;
     }
 
     IEnumerator Pulsate()
@@ -40,6 +41,11 @@ public class CarJunk : MonoBehaviour
         {
             yield return null;
         }
+
+        rb.isKinematic = true;
+        Vector3 tp = transform.position;
+        float yPlusOffset = transform.position.y + 2;
+        transform.position = new Vector3(transform.position.x, yPlusOffset, transform.position.z);
 
         while(true)
         {
