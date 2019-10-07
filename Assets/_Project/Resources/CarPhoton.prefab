@@ -6610,6 +6610,14 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 18fc5124cdead436fbf9fe54b9952378, type: 3}
   - {fileID: 8300000, guid: ad936940933f54f3a883b220eff6d949, type: 3}
   - {fileID: 8300000, guid: 663a28c1417c149138ad0e752d2ddfcb, type: 3}
+  junkPickupClips:
+  - {fileID: 8300000, guid: 87af76150984b44149a180b35bb2c00f, type: 3}
+  - {fileID: 8300000, guid: 5216f46f423144250bf7edf703b330d4, type: 3}
+  - {fileID: 8300000, guid: abe72f7c21e6b4715ab80aad1099cb9a, type: 3}
+  - {fileID: 8300000, guid: e28bdac1b134c4f6a8bbaf1142f47894, type: 3}
+  - {fileID: 8300000, guid: b0128c5429ed2412fa729234dcc852dc, type: 3}
+  - {fileID: 8300000, guid: 4783095e8074340ccb68d743106456e4, type: 3}
+  - {fileID: 8300000, guid: 749b9231c82744c4a916b1e8270c3ba3, type: 3}
   pitchMultiplier: 0.8
   lowPitchMin: 1
   lowPitchMax: 5

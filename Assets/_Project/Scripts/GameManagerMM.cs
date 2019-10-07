@@ -71,7 +71,7 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 
     bool triggerEndGame = false;
     bool audioTransitioning = false;
-    GameObject junkeParent;
+    GameObject junkParent;
     GameObject myCar;
 
     // Set these in Inspector
@@ -87,7 +87,7 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 
     void Awake()
     {
-        junkeParent = GameObject.Find("JunkParent");
+        junkParent = GameObject.Find("JunkParent");
     }
 
 	/// <summary>
@@ -261,7 +261,7 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
             {
 
                 int numberspawed = GameObject.FindGameObjectsWithTag("Junk").Length;
-                amountToSpawn = Mathf.Min(MaxNumToSpawnPerJunkGroup, (MaxNumberOfJunkSpawns - GameObject.FindGameObjectsWithTag("Junk").Length));
+                amountToSpawn = Mathf.Min(MaxNumToSpawnPerJunkGroup, (MaxNumberOfJunkSpawns - numberspawed));
                 //Debug.Log("Starting to spawn a group of" + amountToSpawn + " junk.");
                 while (amountToSpawn > 0)
                 {
@@ -272,9 +272,9 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
                     {
                         //Debug.Log("Spawning");
                         GameObject go = PhotonNetwork.InstantiateSceneObject("Junk", new Vector3(hit.point.x, hit.point.y + 1, hit.point.z), Quaternion.identity, 0);
-                        if (junkeParent != null)
+                        if (junkParent != null)
                         {
-                            go.transform.SetParent(junkeParent.transform);
+                            go.transform.SetParent(junkParent.transform);
                         }
                         amountToSpawn--;
                     }
