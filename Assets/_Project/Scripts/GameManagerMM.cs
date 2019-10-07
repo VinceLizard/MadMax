@@ -83,8 +83,6 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 		}
 		else
 		{
-
-
 			if (PlayerManagerCarPhoton.LocalPlayerInstance == null)
 			{
 				Debug.LogFormat("We are Instantiating LocalPlayer from {0}", SceneManagerHelper.ActiveSceneName);
@@ -137,12 +135,11 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
     // Spawn junk
     IEnumerator SpawnCoro()
 	{
-        
-
 		while (true)
 		{
 			if (PhotonNetwork.IsMasterClient)
 			{
+                Debug.Log("Trying to spawn");
 				int amountToSpawn = 0;
 				while (
 					(amountToSpawn = Mathf.Min(MAX_NUM_TO_SPAWN_PER_SECOND, NumberOfJunkSpawns - GameObject.FindGameObjectsWithTag("Junk").Length)) 
@@ -156,6 +153,7 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 						RaycastHit hit;
 						if (Physics.Raycast(ray, out hit, 2000.0f, LayerMask.GetMask(new string[1] { "Terrain" })))
 						{
+                            Debug.Log("Spawning");
 							PhotonNetwork.InstantiateSceneObject("Junk", new Vector3(hit.point.x, hit.point.y + 1, hit.point.z), Quaternion.identity, 0);
 						}
 					}

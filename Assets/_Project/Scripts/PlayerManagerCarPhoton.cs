@@ -211,19 +211,35 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 		{
             if (Junk > 0)
             {
-                this.Junk--;
-                if (PhotonNetwork.IsMasterClient)
-                {
-                    PhotonNetwork.InstantiateSceneObject("Junk", new Vector3(transform.position.x, transform.position.y + JUNK_SPAWN_EJECT_HEIGHT_OFFSET, transform.position.z), Quaternion.identity, 0);
-                }
-                else
-                {
-                    photonView.RPC("SpawnJunk", RpcTarget.MasterClient);
-                }
+                EjectOneJunk();
             }  
             this.Health -= 0.1f;
         }
 	}
+
+    void OnCollisionEnter(Collision other)
+    {
+        if(other.transform.tag == "Player")
+        {
+            if (Junk > 0)
+            {
+                EjectOneJunk();
+            }
+        }
+    }
+
+    void EjectOneJunk()
+    {
+        this.Junk--;
+        if (PhotonNetwork.IsMasterClient)
+        {
+            PhotonNetwork.InstantiateSceneObject("Junk", new Vector3(transform.position.x, transform.position.y + JUNK_SPAWN_EJECT_HEIGHT_OFFSET, transform.position.z), Quaternion.identity, 0);
+        }
+        else
+        {
+            photonView.RPC("SpawnJunk", RpcTarget.MasterClient);
+        }
+    }
 
     [PunRPC]
     public void SpawnJunk()
