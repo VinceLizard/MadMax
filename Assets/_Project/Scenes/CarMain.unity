@@ -56258,6 +56258,15 @@ MonoBehaviour:
   ThisIsMe: {fileID: 0}
   playerPrefabs:
   - {fileID: 347166586760409962, guid: 645bbe0f61ab2894482f3425401b3d24, type: 3}
+  - {fileID: 4947755128292254183, guid: e03ed8bb3f016034989128c54886e5e5, type: 3}
+  - {fileID: 4378128186008740785, guid: a7fd99d5153110d44b4b4e0eaeec0c4d, type: 3}
+  - {fileID: 3623186261363463562, guid: 51b2b5865fa5cd446a179e26963004b1, type: 3}
+  - {fileID: 5524615142383949454, guid: 728b5a29a1007b14a814d4c7985c31db, type: 3}
+  - {fileID: 4852839639711234919, guid: bca99b2424f807740843fff6300a53cf, type: 3}
+  - {fileID: 9082879929177745531, guid: d0fe7d9cdcecb2c47979bb57e0421eeb, type: 3}
+  - {fileID: 2476682132531755445, guid: c3ee92e43ffc13246a3a81080b978b07, type: 3}
+  - {fileID: 2417606081344660372, guid: f8384004c9ea92549be42f8c9855b226, type: 3}
+  - {fileID: 112365579521640533, guid: cda41e3fb99336147b23c67b4d5eac49, type: 3}
   music: {fileID: 8300000, guid: 808cc3e748e6e43e381a2133b8475bb8, type: 3}
   intenseMusic: {fileID: 8300000, guid: 74eb581d859a84d8d84ffe92ee22504d, type: 3}
   loseMusic: {fileID: 8300000, guid: c1fa7b2f2ac0d41f1a4fb1565cdc8229, type: 3}

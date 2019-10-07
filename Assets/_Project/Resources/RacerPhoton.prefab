@@ -5341,14 +5341,14 @@ WheelCollider:
   m_Radius: 0.335
   m_SuspensionSpring:
     spring: 70000
-    damper: 3500
-    targetPosition: 0.1
+    damper: 1200
+    targetPosition: 0.01
   m_SuspensionDistance: 0.2
-  m_ForceAppPointDistance: 0.1
+  m_ForceAppPointDistance: 0.5
   m_Mass: 20
-  m_WheelDampingRate: 0.25
+  m_WheelDampingRate: 0.01
   m_ForwardFriction:
-    m_ExtremumSlip: 0.1
+    m_ExtremumSlip: 0.001
     m_ExtremumValue: 1
     m_AsymptoteSlip: 0.8
     m_AsymptoteValue: 0.5
@@ -5514,14 +5514,14 @@ WheelCollider:
   m_Radius: 0.335
   m_SuspensionSpring:
     spring: 70000
-    damper: 3500
-    targetPosition: 0.1
+    damper: 1200
+    targetPosition: 0.01
   m_SuspensionDistance: 0.2
-  m_ForceAppPointDistance: 0.1
+  m_ForceAppPointDistance: 0.5
   m_Mass: 20
-  m_WheelDampingRate: 0.25
+  m_WheelDampingRate: 0.01
   m_ForwardFriction:
-    m_ExtremumSlip: 0.1
+    m_ExtremumSlip: 0.001
     m_ExtremumValue: 1
     m_AsymptoteSlip: 0.8
     m_AsymptoteValue: 0.5
@@ -5687,14 +5687,14 @@ WheelCollider:
   m_Radius: 0.335
   m_SuspensionSpring:
     spring: 70000
-    damper: 3500
-    targetPosition: 0.1
+    damper: 1200
+    targetPosition: 0.01
   m_SuspensionDistance: 0.2
-  m_ForceAppPointDistance: 0.1
+  m_ForceAppPointDistance: 0.5
   m_Mass: 20
-  m_WheelDampingRate: 0.25
+  m_WheelDampingRate: 0.01
   m_ForwardFriction:
-    m_ExtremumSlip: 0.1
+    m_ExtremumSlip: 0.001
     m_ExtremumValue: 1
     m_AsymptoteSlip: 0.8
     m_AsymptoteValue: 0.5
@@ -5860,14 +5860,14 @@ WheelCollider:
   m_Radius: 0.335
   m_SuspensionSpring:
     spring: 70000
-    damper: 3500
-    targetPosition: 0.1
+    damper: 1200
+    targetPosition: 0.01
   m_SuspensionDistance: 0.2
-  m_ForceAppPointDistance: 0.1
+  m_ForceAppPointDistance: 0.5
   m_Mass: 20
-  m_WheelDampingRate: 0.25
+  m_WheelDampingRate: 0.01
   m_ForwardFriction:
-    m_ExtremumSlip: 0.1
+    m_ExtremumSlip: 0.001
     m_ExtremumValue: 1
     m_AsymptoteSlip: 0.8
     m_AsymptoteValue: 0.5
@@ -6079,10 +6079,10 @@ MonoBehaviour:
   - {fileID: 347166586749142766}
   m_CentreOfMassOffset: {x: 0, y: 0, z: 0}
   m_MaximumSteerAngle: 25
-  m_SteerHelper: 0.644
-  m_TractionControl: 1
-  m_FullTorqueOverAllWheels: 100000
-  m_ReverseTorque: 10000
+  m_SteerHelper: 0.801
+  m_TractionControl: 0.53
+  m_FullTorqueOverAllWheels: 10000
+  m_ReverseTorque: 4000
   m_MaxHandbrakeTorque: 100000000
   m_Downforce: 300
   m_SpeedType: 0
@@ -6178,9 +6178,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   distance: 12
-  height: 6
+  height: 4.9
   heightSmoothLag: 0.3
-  centerOffset: {x: 0, y: 0, z: 0}
+  centerOffset: {x: 0, y: 1.73, z: 0}
   followOnStart: 0
 --- !u!114 &2780960936976297735
 MonoBehaviour:
