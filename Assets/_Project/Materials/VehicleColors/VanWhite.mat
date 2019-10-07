@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: VanYellow
+  m_Name: VanWhite
   m_Shader: {fileID: 4800000, guid: c3600ace4eafa0b469e95a8165a9c2b2, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
@@ -32,7 +32,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 11cfb69ecd56482429b18ca21e06f96f, type: 3}
+        m_Texture: {fileID: 2800000, guid: 70ca1d1acb7d274408ca768bc1395638, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
