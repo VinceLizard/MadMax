@@ -108,16 +108,18 @@ namespace UnityStandardAssets.Vehicles.Car
         {
             while(true)
             {
-                currentSpeed = m_CarController.CurrentSpeed;
-                yield return new WaitForSeconds(.1f);
-                newCurrentSpeed = m_CarController.CurrentSpeed;
-                if (newCurrentSpeed - currentSpeed < -.01f && !(m_CarController.BrakeInput > 0))
+                if (crashAudioSource != null && crashAudioClips != null)
                 {
-                    crashAudioSource.Play();
-                    crashAudioSource.clip = crashAudioClips[Random.Range(0, crashAudioClips.Length)];
-                    yield return new WaitForSeconds(1f);
-                }
-                
+                    currentSpeed = m_CarController.CurrentSpeed;
+                    yield return new WaitForSeconds(.1f);
+                    newCurrentSpeed = m_CarController.CurrentSpeed;
+                    if (newCurrentSpeed - currentSpeed < -.01f && !(m_CarController.BrakeInput > 0))
+                    {
+                        crashAudioSource.Play();
+                        crashAudioSource.clip = crashAudioClips[Random.Range(0, crashAudioClips.Length)];
+                        yield return new WaitForSeconds(1f);
+                    }
+                }          
             }
         }
 
