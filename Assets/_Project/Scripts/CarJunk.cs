@@ -19,7 +19,6 @@ public class CarJunk : MonoBehaviour
     {
         rb = gameObject.GetComponent<Rigidbody>();
         EjectJunk();
-        
     }
 
     void OnEnable()
@@ -33,9 +32,11 @@ public class CarJunk : MonoBehaviour
         StopCoroutine("Pulsate");
         model.transform.localScale = Vector3.one;
     }
+
     IEnumerator Pulsate()
     {
-        while(rb.velocity.magnitude >= .01f)
+        yield return new WaitForSeconds(1);
+        while(rb.velocity.magnitude >= Mathf.Epsilon)
         {
             yield return null;
         }
