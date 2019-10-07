@@ -262,7 +262,7 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 
                 int numberspawed = GameObject.FindGameObjectsWithTag("Junk").Length;
                 amountToSpawn = Mathf.Min(MaxNumToSpawnPerJunkGroup, (MaxNumberOfJunkSpawns - GameObject.FindGameObjectsWithTag("Junk").Length));
-                Debug.Log("Starting to spawn a group of" + amountToSpawn + " junk.");
+                //Debug.Log("Starting to spawn a group of" + amountToSpawn + " junk.");
                 while (amountToSpawn > 0)
                 {
                     var v = Random.insideUnitCircle * JunkSpawnRadius;
@@ -270,7 +270,7 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
                     RaycastHit hit;
                     if (Physics.Raycast(ray, out hit, 2000.0f, LayerMask.GetMask(new string[1] { "Terrain" })))
                     {
-                        Debug.Log("Spawning");
+                        //Debug.Log("Spawning");
                         GameObject go = PhotonNetwork.InstantiateSceneObject("Junk", new Vector3(hit.point.x, hit.point.y + 1, hit.point.z), Quaternion.identity, 0);
                         if (junkeParent != null)
                         {

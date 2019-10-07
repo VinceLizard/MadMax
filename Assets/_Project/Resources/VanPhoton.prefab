@@ -5315,6 +5315,7 @@ MonoBehaviour:
   CarUiRenderer: {fileID: 0}
   playerUiPrefab: {fileID: 170056, guid: 0d43061c6efb81b47917603c5d68a5df, type: 3}
   lasers: {fileID: 8874280032112864906}
+  boostPower: 1e+13
 --- !u!114 &8125486149065588424
 MonoBehaviour:
   m_ObjectHideFlags: 0
