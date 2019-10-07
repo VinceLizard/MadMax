@@ -71,7 +71,7 @@ namespace UnityStandardAssets.Vehicles.Car
             if (gravelClip != null)
             {
                 gravelAudioSource = gameObject.AddComponent<AudioSource>();
-                gravelAudioSource.outputAudioMixerGroup = mixer.FindMatchingGroups("Skid")[0];
+                gravelAudioSource.outputAudioMixerGroup = mixer.FindMatchingGroups("Car Engine")[0];
                 gravelAudioSource.playOnAwake = false;
                 gravelAudioSource.clip = gravelClip;
                 gravelAudioSource.volume = .2f;
