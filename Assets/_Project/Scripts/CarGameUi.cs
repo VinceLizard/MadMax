@@ -10,7 +10,8 @@ public class CarGameUi : MonoBehaviour
 	[SerializeField] LeaderboardEntryUi leaderboardPrefab;
 	[SerializeField] int NumberOfEntries = 5;
 	[SerializeField] Text winnerText;
-	[SerializeField] Text instructionText;
+    [SerializeField] Text endGameText;
+    [SerializeField] Text instructionText;
 
 	List<LeaderboardEntryUi> leaderboardEntries = new List<LeaderboardEntryUi>();
 	List<PlayerManagerCarPhoton> cars = new List<PlayerManagerCarPhoton>();
@@ -18,7 +19,8 @@ public class CarGameUi : MonoBehaviour
 	private void Awake()
 	{
 		winnerText.gameObject.SetActive(false);
-		leaderboardEntries.Clear();
+        endGameText.gameObject.SetActive(false);
+        leaderboardEntries.Clear();
 		for (int i = 0; i < NumberOfEntries; i++)
 		{
 			leaderboardEntries.Add(GameObject.Instantiate<LeaderboardEntryUi>(leaderboardPrefab, leaderboardAnchor.transform));
@@ -46,11 +48,23 @@ public class CarGameUi : MonoBehaviour
 					cars.Add(car);
 			}
 
-			var winner = cars.Find((c) => c.IsWinner);
+            var loaded = cars.Find((c) => c.IsLoaded);
+            if (loaded) 
+            {
+                GameManagerMM.Instance.EndGame = true;
+                endGameText.gameObject.SetActive(true);
+                endGameText.text = loaded.photonView.Owner.NickName + " has a lot of junk!\nHurry up!";
+            } else {
+                GameManagerMM.Instance.EndGame = false;
+                endGameText.gameObject.SetActive(false);
+            }
+
+            var winner = cars.Find((c) => c.IsWinner);
 			if (winner)
 			{
 				leaderboardAnchor.SetActive(false);
-				winnerText.gameObject.SetActive(true);
+                endGameText.gameObject.SetActive(false);
+                winnerText.gameObject.SetActive(true);
 				winnerText.text = winner.photonView.Owner.NickName + " Has Served the Monolith!\nEveryone else is a disappointment!";
 				break;
 			}
