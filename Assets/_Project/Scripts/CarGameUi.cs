@@ -34,7 +34,7 @@ public class CarGameUi : MonoBehaviour
 	{
 		StartCoroutine(UpdateLeaderboard());
         Debug.Log("Setting instruction text");
-		instructionText.text = string.Format("The Monolith Requests {0} Blocks!", GameManagerMM.Instance.RequiredToDepot);
+		instructionText.text = string.Format("Jonny Junk needs {0} Junks!", GameManagerMM.Instance.RequiredToDepot);
 	}
 
 	IEnumerator UpdateLeaderboard()
@@ -67,7 +67,7 @@ public class CarGameUi : MonoBehaviour
 				leaderboardAnchor.SetActive(false);
                 endGameText.gameObject.SetActive(false);
                 winnerText.gameObject.SetActive(true);
-				winnerText.text = winner.photonView.Owner.NickName + " Has Served the Monolith!\nEveryone else is a disappointment!";
+				winnerText.text = winner.photonView.Owner.NickName + " dumped their junk!\nEveryone else is a disappointment!";
                 thisIsMe = GameManagerMM.Instance.ThisIsMe.GetComponent<PlayerManagerCarPhoton>();
                 if (winner = thisIsMe) {
                     GameManagerMM.Instance.StartTheWin();
