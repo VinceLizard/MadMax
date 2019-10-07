@@ -171,12 +171,15 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
     // switch to endgame music
     IEnumerator StartEndGame() {
         audioTransitioning = true;
-        Instantiate(endGameOrchestralHit, transform.position, transform.rotation);
+        var endGameHit = Instantiate(endGameOrchestralHit, transform.position, transform.rotation);
         Instantiate(endGameVO, transform.position, transform.rotation);
         var t = 0f;
         while (t < musicFadeTimeInSeconds) {
             t += .1f;
             thisAudio.volume = 1-(t/musicFadeTimeInSeconds);
+            yield return new WaitForSeconds(.1f);
+        }
+        while (endGameHit != null) {
             yield return new WaitForSeconds(.1f);
         }
         thisAudio.Stop();
