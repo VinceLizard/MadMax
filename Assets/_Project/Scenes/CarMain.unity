@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
   m_LightingDataAsset: {fileID: 0}
-  m_UseShadowmask: 1
+  m_UseShadowmask: 0
 --- !u!196 &4
 NavMeshSettings:
   serializedVersion: 2
@@ -45098,13 +45098,14 @@ PrefabInstance:
       propertyPath: m_Pivot.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7331404330960147259, guid: 2f03e1e464dd20b4ab48f01ffde210e9,
-        type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
-      objectReference: {fileID: 1201093747}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2f03e1e464dd20b4ab48f01ffde210e9, type: 3}
+--- !u!1 &999242035 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1460738893104410782, guid: 2f03e1e464dd20b4ab48f01ffde210e9,
+    type: 3}
+  m_PrefabInstance: {fileID: 999242034}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1000517302
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -56266,7 +56267,7 @@ MonoBehaviour:
   revertVO: {fileID: 5805271393531897915, guid: 06f0296300142cf43831e084beb6b753,
     type: 3}
   musicFadeTimeInSeconds: 2
-  boostBar: {fileID: 0}
+  boostBar: {fileID: 999242035}
   RequiredToDepot: 10
   JunkSpawnRadius: 850
   MaxNumberOfJunkSpawns: 5000
@@ -95508,7 +95509,7 @@ MonoBehaviour:
   _assetName: scatter_cactilius2
   _assetOpName: Object/scatter_cactilius
   _assetHelp: 
-  _assetID: 14
+  _assetID: -1
   _assetPath: Assets/_Project/HDA/scatter_cactilius.hdalc
   _assetFileObject: {fileID: 102900000, guid: 981ccd85e10c6aa439609de155161cc5, type: 3}
   _objectNodes:
