@@ -107,7 +107,6 @@ namespace HoudiniEngineUnity
 		public const int HAPI_NORMAL_VECTOR_SIZE			= 3;
 		public const int HAPI_QUATERNION_VECTOR_SIZE		= 4;
 		public const int HAPI_EULER_VECTOR_SIZE				= 3;
-		public const int HAPI_UV_VECTOR_SIZE				= 2;
 		public const int HAPI_COLOR_VECTOR_SIZE				= 4;
 		public const int HAPI_CV_VECTOR_SIZE				= 4;
 
@@ -116,17 +115,18 @@ namespace HoudiniEngineUnity
 
 		public const int HAPI_INVALID_PARM_ID 				= -1;
 
+		public const int HAPI_MAX_UVS						= 8;
+
 		// Default Attributes' Names
 		public const string HAPI_ATTRIB_POSITION			= "P";
 		public const string HAPI_ATTRIB_UV					= "uv";
-		public const string HAPI_ATTRIB_UV2					= "uv2";
-		public const string HAPI_ATTRIB_UV3					= "uv3";
 		public const string HAPI_ATTRIB_NORMAL				= "N";
 		public const string HAPI_ATTRIB_TANGENT				= "tangentu";
 		public const string HAPI_ATTRIB_COLOR				= "Cd";
 		public const string HAPI_ATTRIB_ALPHA				= "Alpha";
 		public const string HAPI_ATTRIB_NAME				= "name";
 		public const string HAPI_ATTRIB_INSTANCE			= "instance";
+		public const string HAPI_ATTRIB_ORIENT				= "orient";
 
 		public const string HAPI_UNGROUPED_GROUP_NAME		= "__ungrouped_group";
 
@@ -181,6 +181,8 @@ namespace HoudiniEngineUnity
 		public const string PLUGIN_STORE_KEYS = "HoudiniEnginePluginKeys";
 		public const string PLUGIN_STORE_DATA = "HoudiniEnginePluginData";
 		public const string PLUGIN_SESSION_DATA = "HoudiniEngineSession";
+		public const string PLUGIN_SETTINGS_FILE = "heu_settings.ini";
+		public const string PLUGIN_SESSION_FILE = "heu_session.txt";
 
 		// Collision
 		public const string DEFAULT_COLLISION_GEO = "collision_geo";
@@ -202,6 +204,43 @@ namespace HoudiniEngineUnity
 		public const string DEFAULT_UNITY_HEIGHTFIELD_SPECULAR_ATTR = "unity_hf_specular";
 		public const string DEFAULT_UNITY_HEIGHTFIELD_TILE_OFFSET_ATTR = "unity_hf_tile_offset";
 		public const string DEFAULT_UNITY_HEIGHTFIELD_TILE_SIZE_ATTR = "unity_hf_tile_size";
+
+		public const string DEFAULT_UNITY_HEIGHTFIELD_TERRAINDATA_FILE_ATTR = "unity_hf_terraindata_file";
+		public const string DEFAULT_UNITY_HEIGHTFIELD_TERRAINLAYER_FILE_ATTR = "unity_hf_terrainlayer_file";
+		public const string DEFAULT_UNITY_HEIGHTFIELD_TERRAINDATA_EXPORT_PATH = "unity_hf_terraindata_export_path";
+		public const string DEFAULT_UNITY_HEIGHTFIELD_HEIGHT_RANGE = "unity_hf_height_range";
+		public const string DEFAULT_UNITY_HEIGHTFIELD_YPOS = "unity_hf_ypos";
+
+		public const string HEIGHTFIELD_TREEPROTOTYPE = "unity_hf_tree_prototype";
+
+		public const string HEIGHTFIELD_TREEINSTANCE_PROTOTYPEINDEX = "unity_hf_treeinstance_prototypeindex";
+		public const string HEIGHTFIELD_TREEINSTANCE_HEIGHTSCALE = "unity_hf_treeinstance_heightscale";
+		public const string HEIGHTFIELD_TREEINSTANCE_WIDTHSCALE = "unity_hf_treeinstance_widthscale";
+		public const string HEIGHTFIELD_TREEINSTANCE_LIGHTMAPCOLOR = "unity_hf_treeinstance_lightmapcolor";
+
+		public const string HEIGHTFIELD_DETAIL_RESOLUTION_PER_PATCH = "unity_hf_detail_resolution_patch";
+		public const string HEIGHTFIELD_DETAIL_DISTANCE = "unity_hf_detail_distance";
+		public const string HEIGHTFIELD_DETAIL_DENSITY = "unity_hf_detail_density";
+
+		public const string HEIGHTFIELD_DETAIL_PROTOTYPE_PREFAB = "unity_hf_detail_prototype_prefab";
+		public const string HEIGHTFIELD_DETAIL_PROTOTYPE_TEXTURE = "unity_hf_detail_prototype_texture";
+		public const string HEIGHTFIELD_DETAIL_PROTOTYPE_BENDFACTOR = "unity_hf_detail_prototype_bendfactor";
+		public const string HEIGHTFIELD_DETAIL_PROTOTYPE_DRYCOLOR = "unity_hf_detail_prototype_drycolor";
+		public const string HEIGHTFIELD_DETAIL_PROTOTYPE_HEALTHYCOLOR = "unity_hf_detail_prototype_healthycolor";
+		public const string HEIGHTFIELD_DETAIL_PROTOTYPE_MAXHEIGHT = "unity_hf_detail_prototype_maxheight";
+		public const string HEIGHTFIELD_DETAIL_PROTOTYPE_MAXWIDTH = "unity_hf_detail_prototype_maxwidth";
+		public const string HEIGHTFIELD_DETAIL_PROTOTYPE_MINHEIGHT = "unity_hf_detail_prototype_minheight";
+		public const string HEIGHTFIELD_DETAIL_PROTOTYPE_MINWIDTH = "unity_hf_detail_prototype_minwidth";
+		public const string HEIGHTFIELD_DETAIL_PROTOTYPE_NOISESPREAD = "unity_hf_detail_prototype_noisespread";
+		public const string HEIGHTFIELD_DETAIL_PROTOTYPE_RENDERMODE = "unity_hf_detail_prototype_rendermode";
+
+		public const string HEIGHTFIELD_LAYER_ATTR_TYPE = "unity_hf_layer_type";
+		public const string HEIGHTFIELD_LAYER_TYPE_DETAIL = "detail";
+
+		// General Heightfield
+		public const string HAPI_HEIGHTFIELD_TILE_ATTR = "tile";
+		public const string HAPI_HEIGHTFIELD_LAYERNAME_HEIGHT = "height";
+		public const string HAPI_HEIGHTFIELD_LAYERNAME_MASK = "mask";
 
 
 		// Material Attributes
@@ -287,6 +326,19 @@ namespace HoudiniEngineUnity
 
 		// Textures
 		public const string HEU_TERRAIN_SPLAT_DEFAULT = "Textures/heu_terrain_default_splat";
+
+		// Folder names
+		public const string HEU_FOLDER_MESHES = "Meshes";
+		public const string HEU_FOLDER_MATERIALS = "Materials";
+		public const string HEU_FOLDER_TERRAIN = "Terrain";
+		public const string HEU_FOLDER_TILE = "Tile";
+		public const string HEU_FOLDER_TEXTURES = "Textures";
+
+		// Extensions
+		public const string HEU_EXT_ASSET = ".asset";
+		public const string HEU_EXT_MAT = ".mat";
+		public const string HEU_EXT_TERRAINDATA = ".terraindata";
+		public const string HEU_EXT_TERRAINLAYER = ".terrainlayer";
 	}
 
 }   // HoudiniEngineUnity

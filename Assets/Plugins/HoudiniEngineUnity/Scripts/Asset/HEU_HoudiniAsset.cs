@@ -183,6 +183,9 @@ namespace HoudiniEngineUnity
 		[SerializeField]
 		private bool _uploadParameters;
 
+		[SerializeField]
+		private bool _forceUploadInputs;
+
 		public enum AssetCookStatus
 		{
 			NONE,
@@ -231,10 +234,6 @@ namespace HoudiniEngineUnity
 		[SerializeField]
 		private bool _uiLocked = true;
 
-		// Whether to show object instance inputs on the UI
-		[SerializeField]
-		private bool _showInstanceInputs = true;
-
 		[SerializeField]
 		private bool _showHDAOptions = false;
 
@@ -258,6 +257,14 @@ namespace HoudiniEngineUnity
 
 		[SerializeField]
 		private bool _showTerrainSection = false;
+
+		[SerializeField]
+		private HEU_InstanceInputUIState _instanceInputUIState;
+
+		public HEU_InstanceInputUIState InstanceInputUIState {
+			get { return _instanceInputUIState; }
+			set { _instanceInputUIState = value; }
+		}
 
 #pragma warning restore 0414
 
@@ -316,6 +323,11 @@ namespace HoudiniEngineUnity
 		[SerializeField]
 		private bool _useLODGroups = true;
 		public bool UseLODGroups { get { return _useLODGroups; } set { _useLODGroups = value; } }
+
+		[SerializeField]
+		private bool _splitGeosByGroup = false;
+
+		public bool SplitGeosByGroup { get { return _splitGeosByGroup; } set { _splitGeosByGroup = value; } }
 
 		// CURVES -----------------------------------------------------------------------------------------------------
 
@@ -422,6 +434,8 @@ namespace HoudiniEngineUnity
 			_showCurvesSection = _assetType == HEU_AssetType.TYPE_CURVE;
 			_showInputNodesSection = _assetType == HEU_AssetType.TYPE_INPUT;
 			_showTerrainSection = false;
+
+			_instanceInputUIState = ScriptableObject.CreateInstance<HEU_InstanceInputUIState>();
 
 			Debug.AssertFormat(session != null && session.IsSessionValid(), "Must have valid session for new asset");
 			_sessionID = session.GetSessionData().SessionID;
@@ -541,8 +555,9 @@ namespace HoudiniEngineUnity
 					bool thisCkipCookCheck = _skipCookCheck;
 					bool thisUploadParameters = _uploadParameters;
 					bool thisUploadParameterPreset = false;
+					bool thisForceUploadInputs = _forceUploadInputs;
 					ClearBuildRequest();
-					RecookAsync(thisCheckParameterChangeForCook, thisCkipCookCheck, thisUploadParameters, thisUploadParameterPreset);
+					RecookAsync(thisCheckParameterChangeForCook, thisCkipCookCheck, thisUploadParameters, thisUploadParameterPreset, thisForceUploadInputs);
 				}
 				else if (_requestBuildAction == AssetBuildAction.STRIP_HEDATA)
 				{
@@ -566,7 +581,10 @@ namespace HoudiniEngineUnity
 				{
 					ClearBuildRequest();
 					ResetParametersToDefault();
-					RecookAsync(bCheckParamsChanged: false, bSkipCookCheck: true, bUploadParameters: false, bUploadParameterPreset: true);
+
+					// Doing a Reload here to clear everything out after resetting the parameters.
+					// Originally was doing a Recook but because it will keep stuff around (e.g. terrain), a full reset seems better.
+					RequestReload(bAsync:true);
 				}
 			}
 #endif
@@ -648,7 +666,7 @@ namespace HoudiniEngineUnity
 			{
 				if (_cookStatus == AssetCookStatus.NONE)
 				{
-					RecookBlocking(bCheckParametersChanged, bSkipCookCheck, bUploadParameters, false);
+					RecookBlocking(bCheckParametersChanged, bSkipCookCheck, bUploadParameters, bUploadParameterPreset: false, bForceUploadInputs: false);
 				}
 				else
 				{
@@ -673,6 +691,7 @@ namespace HoudiniEngineUnity
 			_checkParameterChangeForCook = false;
 			_skipCookCheck = false;
 			_uploadParameters = true;
+			_forceUploadInputs = false;
 		}
 
 		private bool HasValidAssetPath()
@@ -714,14 +733,14 @@ namespace HoudiniEngineUnity
 			if (!bResult)
 			{
 				SetCookStatus(AssetCookStatus.POSTLOAD, AssetCookResult.ERRORED);
+			}
 
-				if (_reloadEvent != null)
-				{
-					// Do callbacks regardless of success or failure as listeners might need to know
-					List<GameObject> outputObjects = new List<GameObject>();
-					GetOutputGameObjects(outputObjects);
-					_reloadEvent.Invoke(this, bResult, outputObjects);
-				}
+			if (_reloadEvent != null)
+			{
+				// Do callbacks regardless of success or failure as listeners might need to know
+				List<GameObject> outputObjects = new List<GameObject>();
+				GetOutputGameObjects(outputObjects);
+				_reloadEvent.Invoke(this, bResult, outputObjects);
 			}
 		}
 		
@@ -905,7 +924,7 @@ namespace HoudiniEngineUnity
 				return false;
 			}
 
-			GenerateObjectsGeometry(session);
+			GenerateObjectsGeometry(session, bRebuild: true);
 
 			GenerateInstances(session);
 
@@ -943,7 +962,7 @@ namespace HoudiniEngineUnity
 		/// <param name="bCheckParamsChanged">If true, then will only cook if parameters have changed.</param>
 		/// <param name="bSkipCookCheck">If true, will check if cooking is enabled.</param>
 		/// <returns>True if cooking started.</returns>
-		private bool RecookAsync(bool bCheckParamsChanged, bool bSkipCookCheck, bool bUploadParameters, bool bUploadParameterPreset)
+		private bool RecookAsync(bool bCheckParamsChanged, bool bSkipCookCheck, bool bUploadParameters, bool bUploadParameterPreset, bool bForceUploadInputs)
 		{
 #if HEU_PROFILER_ON
 			_cookStartTime = Time.realtimeSinceStartup;
@@ -953,7 +972,7 @@ namespace HoudiniEngineUnity
 			bool bStarted = false;
 			try
 			{
-				 bStarted = InternalStartRecook(bCheckParamsChanged, bSkipCookCheck, bUploadParameters, bUploadParameterPreset);
+				 bStarted = InternalStartRecook(bCheckParamsChanged, bSkipCookCheck, bUploadParameters, bUploadParameterPreset, bForceUploadInputs);
 			}
 			catch (System.Exception ex)
 			{
@@ -977,8 +996,10 @@ namespace HoudiniEngineUnity
 		/// <param name="bCheckParamsChanged">If true, then will only cook if parameters have changed.</param>
 		/// <param name="bSkipCookCheck">If true, will check if cooking is enabled.</param>
 		/// <param name = "bUploadParameters" > If true, will upload parameter values before cooking.</param>
+		/// <param name="bUploadParameterPreset">If true, will upload parameter preset into Houdini before cooking.</param>
+		/// <param name="bForceUploadInputs">If true, will upload all input geometry into Houdini before cooking.</param>
 		/// <returns>True if cooking was done.</returns>
-		private bool RecookBlocking(bool bCheckParamsChanged, bool bSkipCookCheck, bool bUploadParameters, bool bUploadParameterPreset)
+		private bool RecookBlocking(bool bCheckParamsChanged, bool bSkipCookCheck, bool bUploadParameters, bool bUploadParameterPreset, bool bForceUploadInputs)
 		{
 #if HEU_PROFILER_ON
 			_cookStartTime = Time.realtimeSinceStartup;
@@ -988,7 +1009,7 @@ namespace HoudiniEngineUnity
 
 			try
 			{
-				bStarted = InternalStartRecook(bCheckParamsChanged, bSkipCookCheck, bUploadParameters, bUploadParameterPreset);
+				bStarted = InternalStartRecook(bCheckParamsChanged, bSkipCookCheck, bUploadParameters, bUploadParameterPreset, bForceUploadInputs);
 			}
 			catch (System.Exception ex)
 			{
@@ -1045,8 +1066,10 @@ namespace HoudiniEngineUnity
 		/// <param name="bCheckParamsChanged">If true, then will only cook if parameters have changed.</param>
 		/// <param name="bSkipCookCheck">If true, will check if cooking is enabled.</param>
 		/// <param name="bUploadParameters">If true, will upload parameter values before cooking.</param>
+		/// <param name="bUploadParameterPreset">If true, will upload parameter preset into Houdini before cooking.</param>
+		/// <param name="bForceUploadInputs">If true, will upload all input geometry into Houdini before cooking.</param>
 		/// <returns></returns>
-		private bool InternalStartRecook(bool bCheckParamsChanged, bool bSkipCookCheck, bool bUploadParameters, bool bUploadParameterPreset)
+		private bool InternalStartRecook(bool bCheckParamsChanged, bool bSkipCookCheck, bool bUploadParameters, bool bUploadParameterPreset, bool bForceUploadInputs)
 		{
 			HEU_SessionBase session = GetAssetSession(true);
 			if (session == null)
@@ -1180,7 +1203,7 @@ namespace HoudiniEngineUnity
 				}
 				else
 				{
-					if (!_parameters.UploadValuesToHoudini(session, this, bCheckParamsChanged))
+					if (!_parameters.UploadValuesToHoudini(session, this, bCheckParamsChanged, bForceUploadInputs))
 					{
 						Debug.LogWarningFormat(HEU_Defines.HEU_NAME + ": Failed to upload parameter changes to Houdini for asset {0}", AssetName);
 					}
@@ -1213,8 +1236,9 @@ namespace HoudiniEngineUnity
 			// button that invokes edit node's Reste All Changes.
 			UploadAttributeValues(session);
 
-			// Upload asset inputs
-			UploadInputNodes(session, _bForceUpdate, !bParamsUpdated);
+			// Upload asset inputs. 
+			// bForceUploadInputs allows to upload the input geometry when user hits Recook.
+			UploadInputNodes(session, _bForceUpdate | bForceUploadInputs, !bParamsUpdated);
 
 			bResult = StartHoudiniCookNode(session);
 			if (!bResult)
@@ -1308,7 +1332,7 @@ namespace HoudiniEngineUnity
 				}
 			}
 
-			GenerateObjectsGeometry(session);
+			GenerateObjectsGeometry(session, bRebuild: false);
 
 			GenerateInstances(session);
 
@@ -1351,7 +1375,7 @@ namespace HoudiniEngineUnity
 
 		private bool StartHoudiniCookNode(HEU_SessionBase session)
 		{
-			bool bResult = session.CookNode(AssetID, HEU_PluginSettings.CookTemplatedGeos);
+			bool bResult = session.CookNode(AssetID, HEU_PluginSettings.CookTemplatedGeos, SplitGeosByGroup);
 			if (bResult)
 			{
 				SetCookStatus(AssetCookStatus.COOKING, AssetCookResult.NONE);
@@ -1848,18 +1872,18 @@ namespace HoudiniEngineUnity
 			List<int> newInputIndex = new List<int>();
 
 			for (int i = 0; i < updatedAssetInputCount; ++i)
-				{
+			{
 				HAPI_StringHandle tempNameHandle = HEU_Defines.HEU_INVALID_NODE_ID;
 				if (session.GetNodeInputName(_assetID, i, out tempNameHandle))
-					{
+				{
 					string inputName = HEU_SessionManager.GetString(tempNameHandle, session);
 					//Debug.Log("Found input: " + inputName);
 
 					HEU_InputNode inputNode = GetAssetInputNode(inputName);
-						if(inputNode != null)
-						{
+					if(inputNode != null)
+					{
 						nodesToRemove.Remove(inputNode);
-						}
+					}
 					else
 					{
 						newInputNames.Add(inputName);
@@ -1886,7 +1910,7 @@ namespace HoudiniEngineUnity
 			int numNodesToAdd = newInputNames.Count;
 			for(int i = 0; i < numNodesToAdd; ++i)
 			{
-				HEU_InputNode inputNode = HEU_InputNode.CreateSetupInput(_assetID, newInputIndex[i], newInputNames[i], HEU_InputNode.InputNodeType.CONNECTION, this);
+				HEU_InputNode inputNode = HEU_InputNode.CreateSetupInput(_assetID, newInputIndex[i], newInputNames[i], newInputNames[i], HEU_InputNode.InputNodeType.CONNECTION, this);
 				if (inputNode != null)
 				{
 					AddInputNode(inputNode);
@@ -1952,7 +1976,8 @@ namespace HoudiniEngineUnity
 			foreach (HEU_InputNode inputNode in _inputNodes)
 			{
 				// Upload all but parameter types, as those are taken care of in the parameter update
-				if((inputNode.InputType != HEU_InputNode.InputNodeType.PARAMETER || bUpdateAll) && (bForceUpdate || inputNode.RequiresUpload || inputNode.HasInputNodeTransformChanged())
+				if ((inputNode.InputType != HEU_InputNode.InputNodeType.PARAMETER || bUpdateAll) 
+					&& (bForceUpdate || inputNode.RequiresUpload || inputNode.HasInputNodeTransformChanged())
 					&& inputNode.InputNodeID != HEU_Defines.HEU_INVALID_NODE_ID)
 				{
 					if(bForceUpdate)
@@ -2001,7 +2026,7 @@ namespace HoudiniEngineUnity
 			HAPI_ObjectInfo[] objectInfos = null;
 			HAPI_Transform[] objectTransforms = null;
 
-			if (!GetObjectInfos(session, out objectInfos, out objectTransforms))
+			if (!HEU_HAPIUtility.GetObjectInfos(session, _assetID, ref _nodeInfo, out objectInfos, out objectTransforms))
 			{
 				return false;
 			}
@@ -2013,80 +2038,6 @@ namespace HoudiniEngineUnity
 			for (int i = 0; i < numObjects; ++i)
 			{
 				_objectNodes.Add(CreateObjectNode(session, ref objectInfos[i], ref objectTransforms[i]));
-			}
-
-			return true;
-		}
-
-		/// <summary>
-		/// Gets the object infos and transforms for this asset.
-		/// </summary>
-		/// <param name="objectInfos">Array of retrieved object infos</param>
-		/// <param name="objectTransforms">Array of retrieved object transforms</param>
-		/// <returns>True if succesfully retrieved object infos and transforms</returns>
-		private bool GetObjectInfos(HEU_SessionBase session, out HAPI_ObjectInfo[] objectInfos, out HAPI_Transform[] objectTransforms)
-		{
-			objectInfos = new HAPI_ObjectInfo[0];
-			objectTransforms = new HAPI_Transform[0];
-
-			if (_nodeInfo.type == HAPI_NodeType.HAPI_NODETYPE_SOP)
-			{
-				// For SOP assets, we use the parent IDs to get the object info and geo info
-
-				objectInfos = new HAPI_ObjectInfo[1];
-				if (!session.GetObjectInfo(_nodeInfo.parentId, ref objectInfos[0]))
-				{
-					return false;
-				}
-
-				// Identity transform will be used for SOP assets, so not querying transform
-				objectTransforms = new HAPI_Transform[1];
-				objectTransforms[0] = new HAPI_Transform(true);
-			}
-			else if (_nodeInfo.type == HAPI_NodeType.HAPI_NODETYPE_OBJ)
-			{
-				int objectCount = 0;
-				if (!session.ComposeObjectList(_assetID, out objectCount))
-				{
-					return false;
-				}
-
-				if (objectCount <= 0)
-				{
-					// Since this asset is an object type and has 0 object as children, we use the object itself
-
-					objectInfos = new HAPI_ObjectInfo[1];
-					if (!session.GetObjectInfo(_nodeInfo.id, ref objectInfos[0]))
-					{
-						return false;
-					}
-
-					// Identity transform will be used for single object assets, so not querying transform
-					objectTransforms = new HAPI_Transform[1];
-					objectTransforms[0] = new HAPI_Transform(true);
-				}
-				else
-				{
-					// This object has children, so use GetComposedObjectList to get list of HAPI_ObjectInfos
-
-					objectInfos = new HAPI_ObjectInfo[objectCount];
-					if (!session.GetComposedObjectList(_nodeInfo.parentId, objectInfos, 0, objectCount))
-					{
-						return false;
-					}
-
-					// Now get the object transforms
-					objectTransforms = new HAPI_Transform[objectCount];
-					if (!HEU_SessionManager.GetComposedObjectTransformsMemorySafe(session, _nodeInfo.parentId, HAPI_RSTOrder.HAPI_SRT, objectTransforms, 0, objectCount))
-					{
-						return false;
-					}
-				}
-			}
-			else
-			{
-				Debug.LogWarningFormat(HEU_Defines.HEU_NAME + ": Unsupported node type {0}", _nodeInfo.type);
-				return false;
 			}
 
 			return true;
@@ -2105,7 +2056,7 @@ namespace HoudiniEngineUnity
 			HAPI_ObjectInfo[] objectInfos = null;
 			HAPI_Transform[] objectTransforms = null;
 
-			if (!GetObjectInfos(session, out objectInfos, out objectTransforms))
+			if (!HEU_HAPIUtility.GetObjectInfos(session, _assetID, ref _nodeInfo, out objectInfos, out objectTransforms))
 			{
 				return;
 			}
@@ -2209,11 +2160,12 @@ namespace HoudiniEngineUnity
 		/// Generate geometry (mesh, curves, terrain) for all object nodes.
 		/// </summary>
 		/// <param name="session">Current session</param>
-		private void GenerateObjectsGeometry(HEU_SessionBase session)
+		/// <param name="bRebuild">True if this is a rebuild or recook</param>
+		private void GenerateObjectsGeometry(HEU_SessionBase session, bool bRebuild)
 		{
 			foreach (HEU_ObjectNode objNode in _objectNodes)
 			{
-				objNode.GenerateGeometry(session);
+				objNode.GenerateGeometry(session, bRebuild);
 			}
 		}
 
@@ -3026,15 +2978,6 @@ namespace HoudiniEngineUnity
 			}
 		}
 
-		public HEU_PartData GetPartWithID(HAPI_PartId partID)
-		{
-			foreach (HEU_ObjectNode objNode in _objectNodes)
-			{
-				return objNode.GetPartWithID(partID);
-			}
-			return null;
-		}
-
 		/// <summary>
 		/// Adds gameobjects that were output from this asset.
 		/// </summary>
@@ -3085,20 +3028,6 @@ namespace HoudiniEngineUnity
 				if(foundPart != null)
 				{
 					return foundPart;
-				}
-			}
-			return null;
-		}
-
-		public HEU_GeoNode GetInternalGeoNode(HAPI_NodeId nodeID)
-		{
-			HEU_GeoNode geoNode = null;
-			foreach (HEU_ObjectNode objNode in _objectNodes)
-			{
-				geoNode = objNode.GetGeoNode(nodeID);
-				if (geoNode != null)
-				{
-					return geoNode;
 				}
 			}
 			return null;
@@ -3417,11 +3346,11 @@ namespace HoudiniEngineUnity
 		/// <param name="assetObjectFileName">File name of asset database object</param>
 		/// <param name="objectToAdd">The object to add</param>
 		/// <param name="targetAssetDBObject">Existing asset database object to overwrite or null. Returns valid written object.</param>
-		public void AddToAssetDBCache(string assetObjectFileName, UnityEngine.Object objectToAdd, ref UnityEngine.Object targetAssetDBObject)
+		public void AddToAssetDBCache(string assetObjectFileName, UnityEngine.Object objectToAdd, string relativeFolderPath, ref UnityEngine.Object targetAssetDBObject)
 		{
 			// Once the asset cache folder is set, CreateAddObjectInAssetCacheFolder will not update it
 			string assetCacheFolder = GetValidAssetCacheFolderPath();
-			HEU_AssetDatabase.CreateAddObjectInAssetCacheFolder(AssetName, assetObjectFileName, objectToAdd, ref assetCacheFolder, ref targetAssetDBObject);
+			HEU_AssetDatabase.CreateAddObjectInAssetCacheFolder(AssetName, assetObjectFileName, objectToAdd, relativeFolderPath, ref assetCacheFolder, ref targetAssetDBObject);
 		}
 
 		/// <summary>
@@ -3606,8 +3535,9 @@ namespace HoudiniEngineUnity
 			// Upload parameter preset
 			newAsset.UploadParameterPresetToHoudini(newAsset.GetAssetSession(false));
 
+			this._instanceInputUIState.CopyTo(newAsset._instanceInputUIState);
+
 			// Copy over asset options
-			newAsset._showInstanceInputs	= this._showInstanceInputs;
 			newAsset._showHDAOptions		= this._showHDAOptions;
 			newAsset._showGenerateSection	= this._showGenerateSection;
 			newAsset._showBakeSection		= this._showBakeSection;
@@ -3946,28 +3876,24 @@ namespace HoudiniEngineUnity
 			}
 
 			// Load input nodes (reattach connections)
-			if(assetPreset.inputPresets != null && assetPreset.inputPresets.Count > 0)
-			{
-				foreach(HEU_InputPreset inputPreset in assetPreset.inputPresets)
-				{
-					HEU_InputNode inputNode = GetInputNode(inputPreset._inputName);
-					if(inputNode != null)
-					{
-						inputNode.LoadPreset(session, inputPreset);
-					}
-					else
-					{
-						Debug.LogWarningFormat("Input node with name {0} not found! Unable to set input preset.", inputPreset._inputName);
-					}
-				}
-			}
+			ApplyInputPresets(session, assetPreset.inputPresets, true);
 
-			// Load volume caches (for terrain layers)
-			ApplyVolumeCachePresets(assetPreset.volumeCachePresets, true);
+			// Load volume caches (for terrain layers). Note that some of the volume cache presets
+			// might have already been applied during rebuild, but they should have been removed from this list.
+			// Whatever is leftover are for volume caches which might not have been created during this cook,
+			// so should be added to the recook presets.
+			if (assetPreset.volumeCachePresets != null && assetPreset.volumeCachePresets.Count > 0)
+			{
+				if (_recookPreset == null)
+				{
+					_recookPreset = new HEU_RecookPreset();
+				}
+				_recookPreset._volumeCachePresets.AddRange(assetPreset.volumeCachePresets);
+			}
 
 			Parameters.RecacheUI = true;
 
-			RecookAsync(bCheckParamsChanged: false, bSkipCookCheck: true, bUploadParameters: false, bUploadParameterPreset: true);
+			RecookBlocking(bCheckParamsChanged: false, bSkipCookCheck: true, bUploadParameters: false, bUploadParameterPreset: true, bForceUploadInputs: false);
 		}
 
 		/// <summary>
@@ -3977,7 +3903,9 @@ namespace HoudiniEngineUnity
 		{
 			if (_recookPreset != null)
 			{
-				bool bApplied = ApplyVolumeCachePresets(_recookPreset.volumeCachePresets, false);
+				bool bApplied = ApplyInputPresets(GetAssetSession(true), _recookPreset._inputPresets, false);
+				bApplied |= ApplyVolumeCachePresets(_recookPreset._volumeCachePresets);
+
 				_recookPreset = null;
 				if (bApplied)
 				{
@@ -3987,17 +3915,75 @@ namespace HoudiniEngineUnity
 			}
 		}
 
+		private bool ApplyInputPresets(HEU_SessionBase session, List<HEU_InputPreset> inputPresets, bool bAddMissingInputsToRecookPreset)
+		{
+			bool bApplied = false;
+
+			if (inputPresets != null && inputPresets.Count > 0)
+			{
+				foreach (HEU_InputPreset inputPreset in inputPresets)
+				{
+					HEU_InputNode inputNode = GetInputNode(inputPreset._inputName);
+					if (inputNode != null)
+					{
+						inputNode.LoadPreset(session, inputPreset);
+						bApplied = true;
+					}
+					else
+					{
+						if (bAddMissingInputsToRecookPreset)
+						{
+							if (_recookPreset == null)
+							{
+								_recookPreset = new HEU_RecookPreset();
+							}
+							_recookPreset._inputPresets.Add(inputPreset);
+						}
+						else
+						{
+							Debug.LogWarningFormat("Input node with name {0} not found! Unable to set input preset.", inputPreset._inputName);
+						}
+					}
+				}
+			}
+			return bApplied;
+		}
+
+		public HEU_VolumeCachePreset GetVolumeCachePreset(string objName, string geoName, int tile)
+		{
+			if (_savedAssetPreset == null || _savedAssetPreset.volumeCachePresets == null)
+			{
+				return null;
+			}
+
+			foreach (HEU_VolumeCachePreset volumeCachePreset in _savedAssetPreset.volumeCachePresets)
+			{
+				if (volumeCachePreset._objName.Equals(objName) && volumeCachePreset._geoName.Equals(geoName) && volumeCachePreset._tile == tile)
+				{
+					return volumeCachePreset;
+				}
+			}
+			return null;
+		}
+
+		public void RemoveVolumeCachePreset(HEU_VolumeCachePreset preset)
+		{
+			if (_savedAssetPreset != null && _savedAssetPreset.volumeCachePresets != null)
+			{
+				_savedAssetPreset.volumeCachePresets.Remove(preset);
+			}
+		}
+
 		/// <summary>
 		/// Applies volumecache presets to volume parts. This sets terrain layer settings such as material.
 		/// </summary>
 		/// <param name="volumeCachePresets">The source volumecache preset to apply</param>
 		/// <param name="bAddMissingVolumesToRecookPreset">Whether to add unapplied presets to the RecookPreset for applying later</param>
 		/// <returns>True if applied the preset, therefore requiring another recook.</returns>
-		private bool ApplyVolumeCachePresets(List<HEU_VolumeCachePreset> volumeCachePresets, bool bAddMissingVolumesToRecookPreset)
+		private bool ApplyVolumeCachePresets(List<HEU_VolumeCachePreset> volumeCachePresets)
 		{
 			bool bApplied = false;
 
-			// Load volume caches (for terrain layers)
 			if (volumeCachePresets != null && volumeCachePresets.Count > 0)
 			{
 				foreach (HEU_VolumeCachePreset volumeCachePreset in volumeCachePresets)
@@ -4016,83 +4002,16 @@ namespace HoudiniEngineUnity
 						continue;
 					}
 
-					List<HEU_VolumeCache> volumeCaches = geoNode.VolumeCaches;
-					if (volumeCaches == null)
+					HEU_VolumeCache volumeCache = geoNode.GetVolumeCacheByTileIndex(volumeCachePreset._tile);
+					if (volumeCache == null)
 					{
-						if (bAddMissingVolumesToRecookPreset)
-						{
-							if (_recookPreset == null)
-							{
-								_recookPreset = new HEU_RecookPreset();
-							}
-							_recookPreset.volumeCachePresets.Add(volumeCachePreset);
-						}
-						else
-						{
-							Debug.LogWarningFormat("Volume caches not found for geo node {0}. Unable to set heightfield preset.", volumeCachePreset._geoName);
-						}
+						Debug.LogWarningFormat("Volume cache at tile {0} not found for geo node {1}. Unable to set heightfield preset.", volumeCachePreset._tile, volumeCachePreset._geoName);
 						continue;
 					}
 
-					foreach (HEU_VolumeLayerPreset layerPreset in volumeCachePreset._volumeLayersPresets)
-					{
-						HEU_VolumeCache volumeCache = geoNode.GetVolumeCacheByTileIndex(layerPreset._tile);
-						if (volumeCache == null)
-						{
-							Debug.LogWarningFormat("Volume cache at tile {0} not found for geo node {1} not found! Unable to set heightfield preset.", layerPreset._tile, geoNode.GeoName);
-							continue;
-						}
+					volumeCache.ApplyPreset(volumeCachePreset);
 
-						volumeCache.UIExpanded = volumeCachePreset._uiExpanded;
-
-						HEU_VolumeLayer layer = volumeCache.GetLayer(layerPreset._layerName);
-						if (layer == null)
-						{
-							Debug.LogWarningFormat("Volume layer with name {0} not found! Unable to set heightfield layer preset.", layerPreset._layerName);
-							continue;
-						}
-
-						layer._strength = layerPreset._strength;
-
-						Texture2D diffuseTexture = layer._diffuseTexture;
-						if (!string.IsNullOrEmpty(layerPreset._diffuseTexturePath))
-						{
-							diffuseTexture = HEU_MaterialFactory.LoadTexture(layerPreset._diffuseTexturePath);
-						}
-
-						if (diffuseTexture == null)
-						{
-							diffuseTexture = HEU_VolumeCache.LoadDefaultSplatTexture();
-						}
-						layer._diffuseTexture = diffuseTexture;
-
-						if (!string.IsNullOrEmpty(layerPreset._maskTexturePath))
-						{
-							layer._maskTexture = HEU_MaterialFactory.LoadTexture(layerPreset._maskTexturePath);
-						}
-
-						layer._metallic = layerPreset._metallic;
-
-						if (!string.IsNullOrEmpty(layerPreset._normalTexturePath))
-						{
-							layer._normalTexture = HEU_MaterialFactory.LoadTexture(layerPreset._normalTexturePath);
-						}
-
-						layer._normalScale = layerPreset._normalScale;
-						layer._smoothness = layerPreset._smoothness;
-						layer._specularColor = layerPreset._specularColor;
-
-						layer._tileSize = layerPreset._tileSize;
-						layer._tileOffset = layerPreset._tileOffset;
-
-						layer._uiExpanded = layerPreset._uiExpanded;
-						layer._tile = layerPreset._tile;
-						layer._overrides = layerPreset._overrides;
-
-						volumeCache.IsDirty = true;
-
-						bApplied = true;
-					}
+					bApplied = true;
 				}
 			}
 
