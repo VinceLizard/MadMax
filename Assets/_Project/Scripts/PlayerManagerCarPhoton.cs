@@ -376,6 +376,7 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
                 BoostCooled = false;
                 rb.AddForce(transform.forward * boostPower, ForceMode.Impulse);
                 Invoke("BoostCooler", boostCoolDownTime);
+                StartCoroutine(BoostBar());
             }
         }
 
@@ -409,6 +410,18 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
     void BoostCooler()
     {
         BoostCooled = true;
+    }
+
+    IEnumerator BoostBar() {
+        var t = 0f;
+        var startPos = 61.4f;
+        float endPos = 256f;
+        while (t <= boostCoolDownTime) {
+            t +=.1f;
+            var currentpos = Mathf.Lerp(startPos, endPos, t/boostCoolDownTime);
+            rt.anchoredPosition = new Vector3(currentpos, 0, 0);
+            yield return new WaitForSeconds(.1f);
+        }
     }
 
 	#endregion
