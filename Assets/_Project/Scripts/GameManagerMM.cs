@@ -269,7 +269,10 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
                     {
                         Debug.Log("Spawning");
                         GameObject go = PhotonNetwork.InstantiateSceneObject("Junk", new Vector3(hit.point.x, hit.point.y + 1, hit.point.z), Quaternion.identity, 0);
-                        go.transform.SetParent(junkeParent.transform);
+                        if (junkeParent != null)
+                        {
+                            go.transform.SetParent(junkeParent.transform);
+                        }
                         amountToSpawn--;
                     }
 
