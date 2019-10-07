@@ -13,7 +13,7 @@ public class CarGameUi : MonoBehaviour
     [SerializeField] Text endGameText;
     [SerializeField] Text instructionText;
     
-    PlayerManagerCarPhoton thisIsMe;
+    GameObject thisIsMe;
 
     List<LeaderboardEntryUi> leaderboardEntries = new List<LeaderboardEntryUi>();
 	List<PlayerManagerCarPhoton> cars = new List<PlayerManagerCarPhoton>();
@@ -34,7 +34,7 @@ public class CarGameUi : MonoBehaviour
 	{
 		StartCoroutine(UpdateLeaderboard());
         Debug.Log("Setting instruction text");
-		instructionText.text = string.Format("The Monolith Requests {0} Blocks!", GameManagerMM.Instance.RequiredToDepot);
+		instructionText.text = string.Format("Jonny Junk needs {0} Junks. Once you got it, bring it to the center beacon.", GameManagerMM.Instance.RequiredToDepot);
 	}
 
 	IEnumerator UpdateLeaderboard()
@@ -54,8 +54,9 @@ public class CarGameUi : MonoBehaviour
             if (loaded) 
             {
                 GameManagerMM.Instance.EndGame = true;
+                instructionText.gameObject.SetActive(false);
                 endGameText.gameObject.SetActive(true);
-                endGameText.text = loaded.photonView.Owner.NickName + " has a lot of junk!\nHurry up!";
+                endGameText.text = loaded.photonView.Owner.NickName + " has a lot of junk! Hurry up!";
             } else {
                 GameManagerMM.Instance.EndGame = false;
                 endGameText.gameObject.SetActive(false);
@@ -67,9 +68,9 @@ public class CarGameUi : MonoBehaviour
 				leaderboardAnchor.SetActive(false);
                 endGameText.gameObject.SetActive(false);
                 winnerText.gameObject.SetActive(true);
-				winnerText.text = winner.photonView.Owner.NickName + " Has Served the Monolith!\nEveryone else is a disappointment!";
-                thisIsMe = GameManagerMM.Instance.ThisIsMe.GetComponent<PlayerManagerCarPhoton>();
-                if (winner = thisIsMe) {
+				winnerText.text = winner.photonView.Owner.NickName + " dumped their junk!\nEveryone else is a disappointment!";
+                thisIsMe = GameManagerMM.Instance.ThisIsMe;
+                if (winner.gameObject == thisIsMe) {
                     GameManagerMM.Instance.StartTheWin();
                 } else {
                     GameManagerMM.Instance.StarTheLose();
