@@ -1,7 +1,8 @@
-using System;
+using System.Collections;
 using UnityEngine;
 using Random = UnityEngine.Random;
 using Photon.Pun;
+using UnityStandardAssets.Vehicles.Car;
 
 namespace UnityStandardAssets.Vehicles.Car
 {
@@ -36,6 +37,7 @@ namespace UnityStandardAssets.Vehicles.Car
         public AudioClip highAccelClip;                                             // Audio clip for high acceleration
         public AudioClip highDecelClip;                                             // Audio clip for high deceleration
         public AudioClip gravelClip;                                               // Audio clip for gravel sound when moving
+        public AudioClip[] crashAudioClips;
         public float pitchMultiplier = 1f;                                          // Used for altering the pitch of audio clips
         public float lowPitchMin = 1f;                                              // The lowest possible pitch for the low sounds
         public float lowPitchMax = 6f;                                              // The highest possible pitch for the low sounds
@@ -49,10 +51,13 @@ namespace UnityStandardAssets.Vehicles.Car
         private AudioSource m_HighAccel; // Source for the high acceleration sounds
         private AudioSource m_HighDecel; // Source for the high deceleration sounds
         private AudioSource gravelAudioSource; // Source for gravel sound when moving
+        private AudioSource crashAudioSource;
 
         private bool m_StartedSound; // flag for knowing if we have started sounds
         private bool gravelSoundStarted = false;
         private CarController m_CarController; // Reference to car we are controlling
+        float currentSpeed;
+        float newCurrentSpeed;
 
         private void StartSound()
         {
@@ -82,10 +87,41 @@ namespace UnityStandardAssets.Vehicles.Car
                 gravelAudioSource.dopplerLevel = 0;
             }
 
+            //Setup gravel audiosource
+            if (crashAudioClips[0] != null)
+            {
+                crashAudioSource = gameObject.AddComponent<AudioSource>();
+                crashAudioSource.clip = crashAudioClips[Random.Range(0,crashAudioClips.Length)];
+                crashAudioSource.volume = 1f;
+                crashAudioSource.loop = false;
+                crashAudioSource.minDistance = 5;
+                crashAudioSource.maxDistance = maxRolloffDistance;
+                crashAudioSource.dopplerLevel = 0;
+                StartCoroutine("CrashingSounds");
+            }
+
             // flag that we have started the sounds playing
             m_StartedSound = true;
         }
 
+        IEnumerator CrashingSounds()
+        {
+            while(true)
+            {
+                if (crashAudioSource != null && crashAudioClips != null)
+                {
+                    currentSpeed = m_CarController.CurrentSpeed;
+                    yield return new WaitForSeconds(.1f);
+                    newCurrentSpeed = m_CarController.CurrentSpeed;
+                    if (newCurrentSpeed - currentSpeed < -.01f && !(m_CarController.BrakeInput > 0))
+                    {
+                        crashAudioSource.Play();
+                        crashAudioSource.clip = crashAudioClips[Random.Range(0, crashAudioClips.Length)];
+                        yield return new WaitForSeconds(1f);
+                    }
+                }          
+            }
+        }
 
         private void StopSound()
         {
