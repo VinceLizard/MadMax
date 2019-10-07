@@ -30,9 +30,9 @@ public class CarPlayerUI : MonoBehaviour
 	[SerializeField]
 	private Text playerNameText;
 
-	[Tooltip("UI Slider to display Player's Health")]
+	/*[Tooltip("UI Slider to display Player's Health")]
 	[SerializeField]
-	private Slider playerHealthSlider;
+	private Slider playerHealthSlider;*/
 
 	[SerializeField]
 	private Text junkText;
@@ -77,12 +77,12 @@ public class CarPlayerUI : MonoBehaviour
 			return;
 		}
 
-
+        /*
 		// Reflect the Player Health
 		if (playerHealthSlider != null)
 		{
 			playerHealthSlider.value = target.Health;
-		}
+		}*/
 
 		if(junkText != null)
 		{

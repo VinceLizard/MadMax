@@ -65,9 +65,10 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
     private float boostCoolDownTime = 10;
 
     //True, when the user is firing
-    bool IsFiring;
+    //bool IsFiring;
     Rigidbody rb;
     CarController cc;
+    CarAudio carAudio;
 
     // True when player will eject junk again
     bool junkEjectCooled = true;
@@ -95,10 +96,11 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 		{
 			this.lasers.SetActive(false);
 		}
+        carAudio = gameObject.GetComponent<CarAudio>();
 
-		// #Important
-		// used in GameManager.cs: we keep track of the localPlayer instance to prevent instanciation when levels are synchronized
-		if (photonView.IsMine)
+        // #Important
+        // used in GameManager.cs: we keep track of the localPlayer instance to prevent instanciation when levels are synchronized
+        if (photonView.IsMine)
 		{
 			LocalPlayerInstance = gameObject;
             rb = gameObject.GetComponent<Rigidbody>();
@@ -181,11 +183,11 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 		{
 			this.ProcessInputs();
 
-			if (this.Health <= 0f)
+			/*if (this.Health <= 0f)
 			{
 
 				GameManagerMM.Instance.LeaveRoom();
-			}
+			}*/
 		}
 
         /*
@@ -212,8 +214,10 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 		var junk = other.GetComponentInParent<CarJunk>();
 		if (junk != null && !junk.IsCollected)
 		{
-			junk.IsCollected = true;
+            carAudio.PlayPickupSound();
+            junk.IsCollected = true;
 			junk.Collect();
+            
 			this.Junk += 1;
 
             if(GameManagerMM.Instance.RequiredToDepot <= this.Junk)
