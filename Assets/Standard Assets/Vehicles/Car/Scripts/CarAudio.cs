@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Audio;
 using Random = UnityEngine.Random;
 using Photon.Pun;
 using UnityStandardAssets.Vehicles.Car;
@@ -52,12 +53,18 @@ namespace UnityStandardAssets.Vehicles.Car
         private AudioSource m_HighDecel; // Source for the high deceleration sounds
         private AudioSource gravelAudioSource; // Source for gravel sound when moving
         private AudioSource crashAudioSource;
+        private AudioMixer mixer;
 
         private bool m_StartedSound; // flag for knowing if we have started sounds
         private bool gravelSoundStarted = false;
         private CarController m_CarController; // Reference to car we are controlling
         float currentSpeed;
         float newCurrentSpeed;
+
+        private void Awake()
+        {
+            mixer = Resources.Load("MMMixer") as AudioMixer;
+        }
 
         private void StartSound()
         {
@@ -79,6 +86,7 @@ namespace UnityStandardAssets.Vehicles.Car
             if (gravelClip != null)
             {
                 gravelAudioSource = gameObject.AddComponent<AudioSource>();
+                gravelAudioSource.outputAudioMixerGroup = mixer.FindMatchingGroups("Car Engine")[0];
                 gravelAudioSource.clip = gravelClip;
                 gravelAudioSource.volume = .2f;
                 gravelAudioSource.loop = true;
@@ -91,6 +99,7 @@ namespace UnityStandardAssets.Vehicles.Car
             if (crashAudioClips[0] != null)
             {
                 crashAudioSource = gameObject.AddComponent<AudioSource>();
+                crashAudioSource.outputAudioMixerGroup = mixer.FindMatchingGroups("Crash")[0];
                 crashAudioSource.clip = crashAudioClips[Random.Range(0,crashAudioClips.Length)];
                 crashAudioSource.volume = 1f;
                 crashAudioSource.loop = false;
@@ -231,6 +240,7 @@ namespace UnityStandardAssets.Vehicles.Car
         {
             // create the new audio source component on the game object and set up its properties
             AudioSource source = gameObject.AddComponent<AudioSource>();
+            source.outputAudioMixerGroup = mixer.FindMatchingGroups("Car Engine")[0];
             source.clip = clip;
             source.volume = 0;
             source.loop = true;
