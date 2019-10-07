@@ -174,12 +174,8 @@ namespace HoudiniEngineUnity
 		{
 			Transform parent = this.gameObject.transform;
 
-			// Directory to store generated terrain files.
-			string outputTerrainpath = GetOutputCacheDirectory();
-			outputTerrainpath = HEU_Platform.BuildPath(outputTerrainpath, "Terrain");
-
-			int numVolumes = terrainBuffers.Count;
-			for(int t = 0; t < numVolumes; ++t)
+			int numVolues = terrainBuffers.Count;
+			for(int t = 0; t < numVolues; ++t)
 			{
 				if (terrainBuffers[t]._heightMap != null)
 				{
@@ -193,48 +189,11 @@ namespace HoudiniEngineUnity
 					Terrain terrain = HEU_GeneralUtility.GetOrCreateComponent<Terrain>(newGameObject);
 					TerrainCollider collider = HEU_GeneralUtility.GetOrCreateComponent<TerrainCollider>(newGameObject);
 
-					// TODO: Instead of writing the terrain data into the working folder, user might
-					// want to specify a path explictly. To support that, get terrain data path export 
-					// file via attribute. Then use CreateAsset to write to it.
-
-					if (!string.IsNullOrEmpty(terrainBuffers[t]._terrainDataPath))
-					{
-						// Load the source TerrainData, then make a unique copy of it in the cache folder
-
-						TerrainData sourceTerrainData = HEU_AssetDatabase.LoadAssetAtPath(terrainBuffers[t]._terrainDataPath, typeof(TerrainData)) as TerrainData;
-						if (sourceTerrainData == null)
-						{
-							Debug.LogWarningFormat("TerrainData, set via attribute, not found at: {0}", terrainBuffers[t]._terrainDataPath);
-						}
-
-						terrain.terrainData = HEU_AssetDatabase.CopyUniqueAndLoadAssetAtAnyPath(sourceTerrainData, outputTerrainpath, typeof(TerrainData)) as TerrainData;
-						if (terrain.terrainData != null)
-						{
-							// Store path so that it can be deleted on clean up
-							AddGeneratedOutputFilePath(HEU_AssetDatabase.GetAssetPath(terrain.terrainData));
-						}
-					}
-
-					if (terrain.terrainData == null)
-					{
-						terrain.terrainData = new TerrainData();
-
-						string assetPathName = "TerrainData" + HEU_Defines.HEU_EXT_ASSET;
-						HEU_AssetDatabase.CreateObjectInAssetCacheFolder(terrain.terrainData, outputTerrainpath, null, assetPathName, typeof(TerrainData));
-
-					}
+					terrain.terrainData = new TerrainData();
 					TerrainData terrainData = terrain.terrainData;
 					collider.terrainData = terrainData;
 
-					HEU_TerrainUtility.SetTerrainMaterial(terrain, terrainBuffers[t]._specifiedTerrainMaterialName);
-
-#if UNITY_2018_3_OR_NEWER
-					terrain.allowAutoConnect = true;
-					// This has to be set after setting material
-					terrain.drawInstanced = true;
-#endif
-
-					int heightMapSize = terrainBuffers[t]._heightMapWidth;
+					int heightMapSize = terrainBuffers[t]._heightMapSize;
 
 					terrainData.heightmapResolution = heightMapSize;
 					if (terrainData.heightmapResolution != heightMapSize)
@@ -243,26 +202,15 @@ namespace HoudiniEngineUnity
 						continue;
 					}
 
-					// The terrainData.baseMapResolution is not set here, but rather left to whatever default Unity uses
-					// The terrainData.alphamapResolution is set later when setting the alphamaps.
+					terrainData.baseMapResolution = heightMapSize;
+					terrainData.alphamapResolution = heightMapSize;
 
-					// 32 is the default for resolutionPerPatch
-					const int detailResolution = 1024;
-					const int resolutionPerPatch = 32;
-					terrainData.SetDetailResolution(detailResolution, resolutionPerPatch);
+					const int resolutionPerPatch = 128;
+					terrainData.SetDetailResolution(resolutionPerPatch, resolutionPerPatch);
 
 					terrainData.SetHeights(0, 0, terrainBuffers[t]._heightMap);
 
-					// Note that Unity uses a default height range of 600 when a flat terrain is created.
-					// Without a non-zero value for the height range, user isn't able to draw heights.
-					// Therefore, set 600 as the value if height range is currently 0 (due to flat heightfield).
-					float heightRange = terrainBuffers[t]._heightRange;
-					if (heightRange == 0)
-					{
-						heightRange = 600;
-					}
-
-					terrainData.size = new Vector3(terrainBuffers[t]._terrainSizeX, heightRange, terrainBuffers[t]._terrainSizeY);
+					terrainData.size = new Vector3(terrainBuffers[t]._terrainSizeX, terrainBuffers[t]._heightRange, terrainBuffers[t]._terrainSizeY);
 
 					terrain.Flush();
 
@@ -275,142 +223,67 @@ namespace HoudiniEngineUnity
 
 					// Set layers
 					Texture2D defaultTexture = HEU_VolumeCache.LoadDefaultSplatTexture();
-					int numLayers = terrainBuffers[t]._splatLayers.Count;
+					int numLayers = terrainBuffers[t]._layers.Count;
 
 #if UNITY_2018_3_OR_NEWER
 
-					// Create TerrainLayer for each heightfield layer.
-					// Note that height and mask layers are ignored (i.e. not created as TerrainLayers).
-					// Since height layer is first, only process layers from 2nd index onwards.
-					if (numLayers > 1)
+					// Create TerrainLayer for each heightfield layer
+					// Note that at time of this implementation the new Unity terrain
+					// is still in beta. Therefore, the following layer creation is subject
+					// to change.
+
+					TerrainLayer[] terrainLayers = new TerrainLayer[numLayers];
+					for (int m = 0; m < numLayers; ++m)
 					{
-						// Keep existing TerrainLayers, and either update or append to them
-						TerrainLayer[] existingTerrainLayers = terrainData.terrainLayers;
+						terrainLayers[m] = new TerrainLayer();
 
-						// Total layers are existing layers + new alpha maps
-						List<TerrainLayer> finalTerrainLayers = new List<TerrainLayer>(existingTerrainLayers);
+						HEU_LoadBufferVolumeLayer layer = terrainBuffers[t]._layers[m];
 
-						for (int m = 1; m < numLayers; ++m)
+						if (!string.IsNullOrEmpty(layer._diffuseTexturePath))
 						{
-							TerrainLayer terrainlayer = null;
-
-							int terrainLayerIndex = -1;
-
-							bool bSetTerrainLayerProperties = true;
-
-							HEU_LoadBufferVolumeLayer layer = terrainBuffers[t]._splatLayers[m];
-
-							// Look up TerrainLayer file via attribute if user has set it
-							if (!string.IsNullOrEmpty(layer._layerPath))
-							{
-								terrainlayer = HEU_AssetDatabase.LoadAssetAtPath(layer._layerPath, typeof(TerrainLayer)) as TerrainLayer;
-								if (terrainlayer == null)
-								{
-									Debug.LogWarningFormat("TerrainLayer, set via attribute, not found at: {0}", layer._layerPath);
-									continue;
-								}
-								else
-								{
-									// Always check if its part of existing list so as not to add it again
-									terrainLayerIndex = HEU_TerrainUtility.GetTerrainLayerIndex(terrainlayer, existingTerrainLayers);
-								}
-							}
-
-							if (terrainlayer == null)
-							{
-								terrainlayer = new TerrainLayer();
-								terrainLayerIndex = finalTerrainLayers.Count;
-								finalTerrainLayers.Add(terrainlayer);
-							}
-							else
-							{
-								// For existing TerrainLayer, make a copy of it if it has custom layer attributes
-								// because we don't want to change the original TerrainLayer.
-								if (layer._hasLayerAttributes)
-								{
-									// Copy the TerrainLayer file
-									TerrainLayer prevTerrainLayer = terrainlayer;
-									terrainlayer = HEU_AssetDatabase.CopyAndLoadAssetAtAnyPath(terrainlayer, outputTerrainpath, typeof(TerrainLayer), true) as TerrainLayer;
-									if (terrainlayer != null)
-									{
-										if (terrainLayerIndex >= 0)
-										{
-											// Update the TerrainLayer reference in the list with this copy
-											finalTerrainLayers[terrainLayerIndex] = terrainlayer;
-										}
-										else
-										{
-											// Newly added
-											terrainLayerIndex = finalTerrainLayers.Count;
-											finalTerrainLayers.Add(terrainlayer);
-										}
-
-										// Store path for clean up later
-										AddGeneratedOutputFilePath(HEU_AssetDatabase.GetAssetPath(terrainlayer));
-									}
-									else
-									{
-										Debug.LogErrorFormat("Unable to copy TerrainLayer '{0}' for generating Terrain. "
-											+ "Using original TerrainLayer. Will not be able to set any TerrainLayer properties.", layer._layerName);
-										terrainlayer = prevTerrainLayer;
-										bSetTerrainLayerProperties = false;
-										// Again, continuing on to keep proper indexing.
-									}
-								}
-								else
-								{
-									// Could be a layer in Assets/ but not part of existing layers in TerrainData
-									terrainLayerIndex = finalTerrainLayers.Count;
-									finalTerrainLayers.Add(terrainlayer);
-									bSetTerrainLayerProperties = false;
-								}
-							}
-
-							if (bSetTerrainLayerProperties)
-							{
-								if (!string.IsNullOrEmpty(layer._diffuseTexturePath))
-								{
-									terrainlayer.diffuseTexture = HEU_MaterialFactory.LoadTexture(layer._diffuseTexturePath);
-								}
-								if (terrainlayer.diffuseTexture == null)
-								{
-									terrainlayer.diffuseTexture = defaultTexture;
-								}
-
-								terrainlayer.diffuseRemapMin = Vector4.zero;
-								terrainlayer.diffuseRemapMax = Vector4.one;
-
-								if (!string.IsNullOrEmpty(layer._maskTexturePath))
-								{
-									terrainlayer.maskMapTexture = HEU_MaterialFactory.LoadTexture(layer._maskTexturePath);
-								}
-
-								terrainlayer.maskMapRemapMin = Vector4.zero;
-								terrainlayer.maskMapRemapMax = Vector4.one;
-
-								terrainlayer.metallic = layer._metallic;
-
-								if (!string.IsNullOrEmpty(layer._normalTexturePath))
-								{
-									terrainlayer.normalMapTexture = HEU_MaterialFactory.LoadTexture(layer._normalTexturePath);
-								}
-
-								terrainlayer.normalScale = layer._normalScale;
-
-								terrainlayer.smoothness = layer._smoothness;
-								terrainlayer.specular = layer._specularColor;
-								terrainlayer.tileOffset = layer._tileOffset;
-
-								if (layer._tileSize.magnitude == 0f && terrainlayer.diffuseTexture != null)
-								{
-									// Use texture size if tile size is 0
-									layer._tileSize = new Vector2(terrainlayer.diffuseTexture.width, terrainlayer.diffuseTexture.height);
-								}
-								terrainlayer.tileSize = layer._tileSize;
-							}
+							// Using Resources.Load is much faster than AssetDatabase.Load
+							//terrainLayers[m].diffuseTexture = HEU_MaterialFactory.LoadTexture(layer._diffuseTexturePath);
+							terrainLayers[m].diffuseTexture = Resources.Load<Texture2D>(layer._diffuseTexturePath);
 						}
-						terrainData.terrainLayers = finalTerrainLayers.ToArray();
+						if (terrainLayers[m].diffuseTexture == null)
+						{
+							terrainLayers[m].diffuseTexture = defaultTexture;
+						}
+
+						terrainLayers[m].diffuseRemapMin = Vector4.zero;
+						terrainLayers[m].diffuseRemapMax = Vector4.one;
+
+						if (!string.IsNullOrEmpty(layer._maskTexturePath))
+						{
+							// Using Resources.Load is much faster than AssetDatabase.Load
+							//terrainLayers[m].maskMapTexture = HEU_MaterialFactory.LoadTexture(layer._maskTexturePath);
+							terrainLayers[m].maskMapTexture = Resources.Load<Texture2D>(layer._maskTexturePath);
+						}
+
+						terrainLayers[m].maskMapRemapMin = Vector4.zero;
+						terrainLayers[m].maskMapRemapMax = Vector4.one;
+
+						terrainLayers[m].metallic = layer._metallic;
+
+						if (!string.IsNullOrEmpty(layer._normalTexturePath))
+						{
+							terrainLayers[m].normalMapTexture = HEU_MaterialFactory.LoadTexture(layer._normalTexturePath);
+						}
+
+						terrainLayers[m].normalScale = layer._normalScale;
+
+						terrainLayers[m].smoothness = layer._smoothness;
+						terrainLayers[m].specular = layer._specularColor;
+						terrainLayers[m].tileOffset = layer._tileOffset;
+
+						if (layer._tileSize.magnitude == 0f && terrainLayers[m].diffuseTexture != null)
+						{
+							// Use texture size if tile size is 0
+							layer._tileSize = new Vector2(terrainLayers[m].diffuseTexture.width, terrainLayers[m].diffuseTexture.height);
+						}
+						terrainLayers[m].tileSize = layer._tileSize;
 					}
+					terrainData.terrainLayers = terrainLayers;
 
 #else
 					// Need to create SplatPrototype for each layer in heightfield, representing the textures.
@@ -419,7 +292,7 @@ namespace HoudiniEngineUnity
 					{
 						splatPrototypes[m] = new SplatPrototype();
 
-						HEU_LoadBufferVolumeLayer layer = terrainBuffers[t]._splatLayers[m];
+						HEU_LoadBufferVolumeLayer layer = terrainBuffers[t]._layers[m];
 
 						Texture2D diffuseTexture = null;
 						if (!string.IsNullOrEmpty(layer._diffuseTexturePath))
@@ -451,33 +324,11 @@ namespace HoudiniEngineUnity
 					terrainData.splatPrototypes = splatPrototypes;
 #endif
 
-					// Set the splatmaps
-					if (terrainBuffers[t]._splatMaps != null)
-					{
-						// Set the alphamap size before setting the alphamaps to get correct scaling
-						// The alphamap size comes from the first alphamap layer
-						int alphamapResolution = terrainBuffers[t]._heightMapWidth;
-						if (numLayers > 1)
-						{
-							alphamapResolution = terrainBuffers[t]._splatLayers[1]._heightMapWidth;
-						}
-						terrainData.alphamapResolution = alphamapResolution;
+					terrainData.SetAlphamaps(0, 0, terrainBuffers[t]._splatMaps);
 
-						terrainData.SetAlphamaps(0, 0, terrainBuffers[t]._splatMaps);
-					}
-
-					// Set the tree scattering
-					if (terrainBuffers[t]._scatterTrees != null)
-					{
-						HEU_TerrainUtility.ApplyScatterTrees(terrainData, terrainBuffers[t]._scatterTrees);
-					}
-
-					// Set the detail layers
-					if (terrainBuffers[t]._detailPrototypes != null)
-					{
-						HEU_TerrainUtility.ApplyDetailLayers(terrain, terrainData, terrainBuffers[t]._detailProperties,
-							terrainBuffers[t]._detailPrototypes, terrainBuffers[t]._detailMaps);
-					}
+					//string assetPath = HEU_AssetDatabase.CreateAssetCacheFolder("terrainData");
+					//AssetDatabase.CreateAsset(terrainData, assetPath);
+					//Debug.Log("Created asset data at " + assetPath);
 
 					terrainBuffers[t]._generatedOutput = generatedOutput;
 					_generatedOutputs.Add(generatedOutput);
@@ -801,15 +652,6 @@ namespace HoudiniEngineUnity
 				}
 				_generatedOutputs.Clear();
 			}
-
-			if (_outputCacheFilePaths != null && _outputCacheFilePaths.Count > 0)
-			{
-				foreach(string filepath in _outputCacheFilePaths)
-				{
-					HEU_AssetDatabase.DeleteAssetAtPath(filepath);
-				}
-				_outputCacheFilePaths.Clear();
-			}
 		}
 
 		private void SetOutputVisiblity(HEU_LoadBufferBase buffer)
@@ -850,29 +692,6 @@ namespace HoudiniEngineUnity
 			return session;
 		}
 
-		private string GetOutputCacheDirectory()
-		{
-			if (string.IsNullOrEmpty(_outputCacheDirectory))
-			{
-				// Get a unique working folder if none set
-				_outputCacheDirectory = HEU_AssetDatabase.CreateAssetCacheFolder(this.name);
-			}
-			return _outputCacheDirectory;
-		}
-
-		public void SetOutputCacheDirectory(string directory)
-		{
-			_outputCacheDirectory = directory;
-		}
-
-		private void AddGeneratedOutputFilePath(string path)
-		{
-			if (!string.IsNullOrEmpty(path) && !_outputCacheFilePaths.Contains(path))
-			{
-				_outputCacheFilePaths.Add(path);
-			}
-		}
-
 		public bool IsLoaded() { return _fileNodeID != HEU_Defines.HEU_INVALID_NODE_ID; }
 
 		public HEU_GenerateOptions GenerateOptions { get { return _generateOptions; } }
@@ -903,14 +722,6 @@ namespace HoudiniEngineUnity
 
 		[SerializeField]
 		private bool _initialized;
-
-        // Directory to write out generated files
-        [SerializeField]
-        private string _outputCacheDirectory = "";
-
-		// List of generated file paths, so the files can be cleaned up on dirty
-		[SerializeField]
-		private List<string> _outputCacheFilePaths = new List<string>();
 	}
 
 	[System.Serializable]

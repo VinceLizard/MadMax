@@ -414,23 +414,6 @@ namespace HoudiniEngineUnity
 #endif
 		}
 
-		/// <summary>
-		/// Delete the asset object.
-		/// </summary>
-		/// <param name="asset">The asset object to delete</param>
-		public static void DeleteAssetAtPath(string path)
-		{
-#if UNITY_EDITOR
-			if (!string.IsNullOrEmpty(path))
-			{
-				AssetDatabase.DeleteAsset(path);
-			}
-#else
-			// TODO RUNTIME: AssetDatabase is not supported at runtime. Do we need to support this for runtime?
-			Debug.LogWarning(HEU_Defines.HEU_USERMSG_NONEDITOR_NOT_SUPPORTED);
-#endif
-		}
-
 		public static void DeleteAssetIfInBakedFolder(Object asset)
 		{
 #if UNITY_EDITOR
@@ -473,58 +456,40 @@ namespace HoudiniEngineUnity
 		}
 
 		/// <summary>
-		/// Loads a copy of the srcAsset, or if copy is not found, creates the copy and loads it.
-		/// The copy is expected to be located at newAssetFolderPath/relativePath.
-		/// If relativePath is null or empty, uses the srcAsset type to acquire the subfolder if the type requires it.
+		/// Loads a copy of the given asset. Creates the copy if not found.
 		/// </summary>
 		/// <param name="srcAsset">Source asset whose copy will be loaded (and created if no copy exists).</param>
-		/// <param name="copyAssetFolder">Asset's root folder to look for the copy or create in</param>
-		/// <param name="relativePath">If not null or empty, the relative path to append to the newAssetFolderPath. 
-		/// Otherwise uses type of asset to subfolder name.</param>
+		/// <param name="newAssetFolderPath">Folder of to look for copy or create in</param>
 		/// <param name="type">Type of asset</param>
-		/// <returns>Returns loaded copy if exists or created, otherwise null</returns>
-		public static Object CopyAndLoadAssetWithRelativePath(Object srcAsset, string copyAssetFolder, string relativePath, System.Type type, bool bOverwriteExisting)
+		/// <returns>Loaded copy of the asset</returns>
+		public static Object LoadAssetCopy(Object srcAsset, string newAssetFolderPath, System.Type type, bool bOverwriteExisting)
 		{
 #if UNITY_EDITOR
 			string srcAssetPath = GetAssetPath(srcAsset);
 			if (!string.IsNullOrEmpty(srcAssetPath) && IsPathInAssetCache(srcAssetPath))
 			{
-				string copyAssetFullPath = copyAssetFolder;
-
-				if (!string.IsNullOrEmpty(relativePath))
+				string subFolderPath = newAssetFolderPath;
+				if(type == typeof(Material))
 				{
-					copyAssetFullPath = HEU_Platform.BuildPath(copyAssetFullPath, relativePath);
+					subFolderPath = AppendMaterialsPathToAssetFolder(newAssetFolderPath);
 				}
-				else
+				else if(type == typeof(Texture))
 				{
-					if (type == typeof(Material))
-					{
-						copyAssetFullPath = AppendMaterialsPathToAssetFolder(copyAssetFolder);
-					}
-					else if (type == typeof(Texture))
-					{
-						copyAssetFullPath = AppendTexturesPathToAssetFolder(copyAssetFolder);
-					}
-					else if (type == typeof(Mesh))
-					{
-						copyAssetFullPath = AppendMeshesPathToAssetFolder(copyAssetFolder);
-					}
-					else if (type == typeof(TerrainData)
-#if UNITY_2018_3_OR_NEWER
-						|| (type == typeof(TerrainLayer))
-#else
-						|| (type == typeof(SplatPrototype))
-#endif
-					)
-					{
-						copyAssetFullPath = AppendTerrainPathToAssetFolder(copyAssetFolder);
-					}
+					subFolderPath = AppendTexturesPathToAssetFolder(newAssetFolderPath);
+				}
+				else if (type == typeof(Mesh))
+				{
+					subFolderPath = AppendMeshesPathToAssetFolder(newAssetFolderPath);
+				}
+				else if (type == typeof(TerrainData))
+				{
+					subFolderPath = AppendTerrainPathToAssetFolder(newAssetFolderPath);
 				}
 
-				CreatePathWithFolders(copyAssetFullPath);
+				CreatePathWithFolders(subFolderPath);
 
 				string fileName = HEU_Platform.GetFileName(srcAssetPath);
-				string newAssetPath = HEU_Platform.BuildPath(copyAssetFullPath, fileName);
+				string newAssetPath = HEU_Platform.BuildPath(subFolderPath, fileName);
 
 				if ((!bOverwriteExisting && HEU_Platform.DoesFileExist(newAssetPath)) || CopyAsset(srcAssetPath, newAssetPath))
 				{
@@ -546,160 +511,32 @@ namespace HoudiniEngineUnity
 #endif
 		}
 
-		/// <summary>
-		/// Loads a copy of the srcAsset at copyPath, which must reside in the asset cache. Creates a copy if not found.
-		/// This does nothing if srcAsset resides outside the asset cache.
-		/// </summary>
-		/// <param name="srcAsset">The source asset object</param>
-		/// <param name="copyPath">The full path to the copy</param>
-		/// <param name="type">The type of source asset</param>
-		/// <param name="bOverwriteExisting">Whether to overwrite existing copy if found</param>
-		/// <returns>Returns loaded copy if exists or created, otherwise null</returns>
-		public static Object CopyAndLoadAssetFromAssetCachePath(Object srcAsset, string copyPath, System.Type type, bool bOverwriteExisting)
-		{
-#if UNITY_EDITOR
-			string srcAssetPath = GetAssetPath(srcAsset);
-			if (!string.IsNullOrEmpty(srcAssetPath) && IsPathInAssetCache(srcAssetPath))
-			{
-				return CopyAndLoadAssetAtAnyPath(srcAsset, copyPath, type, bOverwriteExisting);
-			}
-			return null;
-#else
-			// TODO RUNTIME: AssetDatabase is not supported at runtime. Do we need to support this for runtime?
-			Debug.LogWarning(HEU_Defines.HEU_USERMSG_NONEDITOR_NOT_SUPPORTED);
-			return null;
-#endif
-		}
 
 		/// <summary>
-		/// Loads a copy of the srcAsset at copyPath. Creates a copy if not found.
-		/// </summary>
-		/// <param name="srcAsset">The source asset object</param>
-		/// <param name="copyPath">The full path to the copy</param>
-		/// <param name="type">The type of source asset</param>
-		/// <param name="bOverwriteExisting">Whether to overwrite existing copy if found</param>
-		/// <returns>Returns loaded copy if exists or created, otherwise null</returns>
-		public static Object CopyAndLoadAssetAtAnyPath(Object srcAsset, string copyPath, System.Type type, bool bOverwriteExisting)
-		{
-#if UNITY_EDITOR
-			string srcAssetPath = GetAssetPath(srcAsset);
-			if (!string.IsNullOrEmpty(srcAssetPath))
-			{
-				CreatePathWithFolders(copyPath);
-
-				string fileName = HEU_Platform.GetFileName(srcAssetPath);
-				string fullCopyPath = HEU_Platform.BuildPath(copyPath, fileName);
-
-				if ((!bOverwriteExisting && HEU_Platform.DoesFileExist(fullCopyPath)) || CopyAsset(srcAssetPath, fullCopyPath))
-				{
-					// Refresh database as otherwise we won't be able to load it in the next line.
-					SaveAndRefreshDatabase();
-
-					return LoadAssetAtPath(fullCopyPath, type);
-				}
-				else
-				{
-					Debug.LogErrorFormat("Failed to copy and load asset from {0} to {1}!", srcAssetPath, fullCopyPath);
-				}
-			}
-			return null;
-#else
-			// TODO RUNTIME: AssetDatabase is not supported at runtime. Do we need to support this for runtime?
-			Debug.LogWarning(HEU_Defines.HEU_USERMSG_NONEDITOR_NOT_SUPPORTED);
-			return null;
-#endif
-		}
-
-		/// <summary>
-		/// Creates a unique copy of the srcAsset at copyPath, and loads it.
-		/// If another asset is at copyPath, it creates another (unique) file name.
-		/// </summary>
-		/// <param name="srcAsset">The source asset object</param>
-		/// <param name="copyPath">The full path to the copy</param>
-		/// <param name="type">The type of source asset</param>
-		/// <returns>Returns loaded copy if exists or created, otherwise null</returns>
-		public static Object CopyUniqueAndLoadAssetAtAnyPath(Object srcAsset, string copyPath, System.Type type)
-		{
-#if UNITY_EDITOR
-			string srcAssetPath = GetAssetPath(srcAsset);
-			if (!string.IsNullOrEmpty(srcAssetPath))
-			{
-				CreatePathWithFolders(copyPath);
-
-				string fileName = HEU_Platform.GetFileName(srcAssetPath);
-				string fullCopyPath = HEU_Platform.BuildPath(copyPath, fileName);
-
-				if (HEU_Platform.DoesFileExist(fullCopyPath))
-				{
-					fullCopyPath = GetUniqueAssetPath(fullCopyPath);
-					if (HEU_Platform.DoesFileExist(fullCopyPath))
-					{
-						Debug.LogErrorFormat("Failed to get unique path to make copy for {0} at {1}!", srcAssetPath, fullCopyPath);
-						return null;
-					}
-				}
-
-				if (CopyAsset(srcAssetPath, fullCopyPath))
-				{
-					// Refresh database as otherwise we won't be able to load it in the next line.
-					SaveAndRefreshDatabase();
-
-					return LoadAssetAtPath(fullCopyPath, type);
-				}
-				else
-				{
-					Debug.LogErrorFormat("Failed to copy and load asset from {0} to {1}!", srcAssetPath, fullCopyPath);
-				}
-			}
-			return null;
-#else
-			// TODO RUNTIME: AssetDatabase is not supported at runtime. Do we need to support this for runtime?
-			Debug.LogWarning(HEU_Defines.HEU_USERMSG_NONEDITOR_NOT_SUPPORTED);
-			return null;
-#endif
-		}
-
-		/// <summary>
-		/// Create the given object inside the asset cache folder path, with relative folder path.
+		/// Create the given object inside the asset cache folder path.
 		/// Depending on type, it might store in a subfolder for organizational purposes.
 		/// </summary>
-		/// <param name="objectToCreate">The object to create inside the asset cache</param>
-		/// <param name="assetCacheRoot">The target path in the asset cache</param>
-		/// <param name="relativeFolderPath">If not null or empty, the relative path to append to the assetCacheRoot. 
-		/// Otherwise uses type of asset to get subfolder name.</param>
-		/// <param name="assetFileName">The asset's file name</param>
-		/// <param name="type">The type of asset</param>
-		public static void CreateObjectInAssetCacheFolder(Object objectToCreate, string assetCacheRoot, string relativeFolderPath, string assetFileName, System.Type type)
+		/// <param name="objectToCreate"></param>
+		/// <param name="assetCacheFolderPath"></param>
+		/// <param name="assetFileName"></param>
+		/// <param name="type"></param>
+		public static void CreateObjectInAssetCacheFolder(Object objectToCreate, string assetCacheFolderPath, string assetFileName, System.Type type)
 		{
 #if UNITY_EDITOR
-			Debug.Assert(!string.IsNullOrEmpty(assetCacheRoot), "Must give valid assetCacheFolderPath to create object at");
+			Debug.Assert(!string.IsNullOrEmpty(assetCacheFolderPath), "Must give valid assetCacheFolderPath to create object at");
 
-			string subFolderPath = assetCacheRoot;
-
-			if (!string.IsNullOrEmpty(relativeFolderPath))
+			string subFolderPath = assetCacheFolderPath;
+			if(type == typeof(Mesh))
 			{
-				subFolderPath = HEU_Platform.BuildPath(subFolderPath, relativeFolderPath);
+				subFolderPath = AppendMeshesPathToAssetFolder(assetCacheFolderPath);
 			}
-			else
+			else if (type == typeof(Material))
 			{
-				if (type == typeof(Mesh))
-				{
-					subFolderPath = AppendMeshesPathToAssetFolder(assetCacheRoot);
-				}
-				else if (type == typeof(Material))
-				{
-					subFolderPath = AppendMaterialsPathToAssetFolder(assetCacheRoot);
-				}
-				else if (type == typeof(TerrainData)
-#if UNITY_2018_3_OR_NEWER
-				|| (type == typeof(TerrainLayer))
-#else
-				|| (type == typeof(SplatPrototype))
-#endif
-				)
-				{
-					subFolderPath = AppendTerrainPathToAssetFolder(assetCacheRoot);
-				}
+				subFolderPath = AppendMaterialsPathToAssetFolder(assetCacheFolderPath);
+			}
+			else if (type == typeof(TerrainData))
+			{
+				subFolderPath = AppendTerrainPathToAssetFolder(assetCacheFolderPath);
 			}
 
 			// Make sure subfolders exist
@@ -728,7 +565,7 @@ namespace HoudiniEngineUnity
 #endif
 		}
 
-		public static void CreateAddObjectInAssetCacheFolder(string assetName, string assetObjectFileName, UnityEngine.Object objectToAdd, string relativeFolderPath, ref string bakedAssetPath, ref UnityEngine.Object assetDBObject)
+		public static void CreateAddObjectInAssetCacheFolder(string assetName, string assetObjectFileName, UnityEngine.Object objectToAdd, ref string bakedAssetPath, ref UnityEngine.Object assetDBObject)
 		{
 #if UNITY_EDITOR
 			if (string.IsNullOrEmpty(bakedAssetPath))
@@ -738,7 +575,7 @@ namespace HoudiniEngineUnity
 
 			if (assetDBObject == null)
 			{
-				HEU_AssetDatabase.CreateObjectInAssetCacheFolder(objectToAdd, bakedAssetPath, relativeFolderPath, assetObjectFileName, objectToAdd.GetType());
+				HEU_AssetDatabase.CreateObjectInAssetCacheFolder(objectToAdd, bakedAssetPath, assetObjectFileName, objectToAdd.GetType());
 				assetDBObject = objectToAdd;
 			}
 			else
@@ -1011,33 +848,27 @@ namespace HoudiniEngineUnity
 
 		public static string AppendMeshesPathToAssetFolder(string inAssetCacheFolder)
 		{
-			return HEU_Platform.BuildPath(inAssetCacheFolder, HEU_Defines.HEU_FOLDER_MESHES);
+			return HEU_Platform.BuildPath(inAssetCacheFolder, "Meshes");
 		}
 
 		public static string AppendTexturesPathToAssetFolder(string inAssetCacheFolder)
 		{
-			return HEU_Platform.BuildPath(inAssetCacheFolder, HEU_Defines.HEU_FOLDER_TEXTURES);
+			return HEU_Platform.BuildPath(inAssetCacheFolder, "Textures");
 		}
 
 		public static string AppendMaterialsPathToAssetFolder(string inAssetCacheFolder)
 		{
-			return HEU_Platform.BuildPath(inAssetCacheFolder, HEU_Defines.HEU_FOLDER_MATERIALS);
+			return HEU_Platform.BuildPath(inAssetCacheFolder, "Materials");
 		}
 
 		public static string AppendTerrainPathToAssetFolder(string inAssetCacheFolder)
 		{
-			return HEU_Platform.BuildPath(inAssetCacheFolder, HEU_Defines.HEU_FOLDER_TERRAIN);
+			return HEU_Platform.BuildPath(inAssetCacheFolder, "Terrain");
 		}
 
 		public static string[] GetAssetSubFolders()
 		{
-			return new string[] 
-			{
-				HEU_Defines.HEU_FOLDER_MESHES,
-				HEU_Defines.HEU_FOLDER_TEXTURES,
-				HEU_Defines.HEU_FOLDER_MATERIALS,
-				HEU_Defines.HEU_FOLDER_TERRAIN
-			};
+			return new string[] { "Meshes", "Textures", "Materials", "Terrain" };
 		}
 
 		public static string AppendPrefabPath(string inAssetCacheFolder, string assetName)

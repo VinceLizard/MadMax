@@ -38,22 +38,13 @@ namespace HoudiniEngineUnity
 	using HAPI_PDG_WorkitemId = System.Int32;
 
 
-	/// <summary>
-	/// Meta data container for filtering when displaying TOP networks and nodes
-	/// </summary>
 	public class TOPNodeTags
 	{
-		// True if should show the TOP node in dropdown
 		public bool _show = false;
-
-		// True if TOP node's generated results should be loaded into scene
 		public bool _autoload = false;
 	}
 
 
-	/// <summary>
-	/// Container for TOP network data
-	/// </summary>
 	[System.Serializable]
 	public class HEU_TOPNetworkData
 	{
@@ -72,9 +63,6 @@ namespace HoudiniEngineUnity
 		public TOPNodeTags _tags = new TOPNodeTags();
 	}
 
-	/// <summary>
-	/// Container for TOP node data, status, results, etc
-	/// </summary>
 	[System.Serializable]
 	public class HEU_TOPNodeData
 	{
@@ -126,9 +114,6 @@ namespace HoudiniEngineUnity
 		}
 	}
 
-	/// <summary>
-	/// Container of work item's results (e.g. loaded geometry / gameobject)
-	/// </summary>
 	[System.Serializable]
 	public class HEU_TOPWorkResult
 	{
@@ -137,10 +122,6 @@ namespace HoudiniEngineUnity
 		public List<GameObject> _generatedGOs = new List<GameObject>();
 	}
 
-	/// <summary>
-	/// Work item status tally for UI.
-	/// Allows to show number of work items cooking, waiting, errored, etc.
-	/// </summary>
 	[System.Serializable]
 	public class HEU_WorkItemTally
 	{

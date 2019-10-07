@@ -32,18 +32,12 @@ using UnityEditor;
 
 namespace HoudiniEngineUnity
 {
-	/// <summary>
-	/// This is the UI class for HEU_PDGAssetLink, and allows to manage its state.
-	/// This "links" to an instanced HDA in the scene, and manage the TOP networks within.
-	/// Shows TOP networks and TOP nodes within the HDA, show the PDG graph status, work item status, 
-	/// allows to cook and dirty TOP networks, and nodes, and load / unload generated results.
-	/// </summary>
+
 	[CustomEditor(typeof(HEU_PDGAssetLink))]
 	public class HEU_PDGAssetLinkUI : Editor
 	{
 		private void OnEnable()
 		{
-			// The HEU_PDGAssetLink contains the state and cached data of the linked asset
 			_assetLink = target as HEU_PDGAssetLink;
 		}
 
@@ -67,9 +61,6 @@ namespace HoudiniEngineUnity
 			DrawAssetLink();
 		}
 
-		/// <summary>
-		/// Display message when no asset is linked.
-		/// </summary>
 		private void DrawNoAssetLink()
 		{
 			HEU_EditorUI.DrawSeparator();
@@ -82,9 +73,6 @@ namespace HoudiniEngineUnity
 			HEU_EditorUI.DrawSeparator();
 		}
 
-		/// <summary>
-		/// Main function to display linked asset's info, and functions.
-		/// </summary>
 		private void DrawAssetLink()
 		{
 			HEU_PDGAssetLink.LinkState validState = _assetLink.AssetLinkState;
@@ -93,7 +81,6 @@ namespace HoudiniEngineUnity
 			{
 				EditorGUILayout.Space();
 
-				// Linked asset
 				SerializedProperty assetGOProp = HEU_EditorUtility.GetSerializedProperty(serializedObject, "_assetGO");
 				if (assetGOProp != null)
 				{
@@ -104,28 +91,22 @@ namespace HoudiniEngineUnity
 
 				using (new EditorGUILayout.HorizontalScope())
 				{
-					// Refresh button re-poplates the UI data from linked asset
 					if (GUILayout.Button(_refreshContent, GUILayout.MaxHeight(_largButtonHeight)))
 					{
 						_assetLink.Refresh();
 					}
 
-					// Reset button resets and recreates the HEU_PDGAssetLink
 					if (GUILayout.Button(_resetContent, GUILayout.MaxHeight(_largButtonHeight)))
 					{
 						_assetLink.Reset();
 					}
 				}
 
-				// Autocook allows to automatically cook the TOP network when input assets are cooked
 				_assetLink._autoCook = EditorGUILayout.Toggle(_autocookContent, _assetLink._autoCook);
-
-				// Whether to use HEngine meta data to filter TOP networks and nodes
 				_assetLink._useHEngineData = EditorGUILayout.Toggle(_useHEngineDataContent, _assetLink._useHEngineData);
 
 				EditorGUILayout.Space();
 
-				// Asset status
 				using (new EditorGUILayout.VerticalScope(HEU_EditorUI.GetSectionStyle()))
 				{
 					EditorGUILayout.LabelField("Asset is " + validState);
@@ -157,42 +138,17 @@ namespace HoudiniEngineUnity
 				{
 					EditorGUILayout.Space();
 
+					// Dropdown list of TOP network names
 					DrawSelectedTOPNetwork();
 
 					EditorGUILayout.Space();
 
+					// Dropdown list of TOP nodes
 					DrawSelectedTOPNode();
 				}
 			}
-
-			// Display cook event messages
-			string eventMsgs = "<color=#c0c0c0ff>Cook event messages and errors will be displayed here...</color>";
-			HEU_PDGSession pdgSession = HEU_PDGSession.GetPDGSession();
-			if (pdgSession != null)
-			{
-				string actualMsgs = pdgSession.GetEventMessages();
-				if (!string.IsNullOrEmpty(actualMsgs))
-				{
-					eventMsgs = string.Format("{0}", actualMsgs);
-				}
-			}
-
-			using (new EditorGUILayout.VerticalScope(_backgroundStyle))
-			{
-				EditorGUILayout.Space();
-
-				_eventMessageScrollPos = EditorGUILayout.BeginScrollView(_eventMessageScrollPos, false, false);
-				Vector2 textSize = _eventMessageStyle.CalcSize(new GUIContent(eventMsgs));
-				EditorGUILayout.PrefixLabel(_eventMessageContent);
-				EditorGUILayout.SelectableLabel(eventMsgs, _eventMessageStyle, GUILayout.ExpandHeight(true), 
-					GUILayout.ExpandWidth(true), GUILayout.MinWidth(textSize.x), GUILayout.MinHeight(textSize.y));
-				EditorGUILayout.EndScrollView();
-			}
 		}
 
-		/// <summary>
-		/// Displays a dropdown list of TOP network names, and shows the selected TOP network info
-		/// </summary>
 		private void DrawSelectedTOPNetwork()
 		{
 			HEU_EditorUI.DrawHeadingLabel("Internal TOP Networks");
@@ -250,9 +206,6 @@ namespace HoudiniEngineUnity
 			}
 		}
 
-		/// <summary>
-		/// Displays a dropdown list of TOP nodes, and shows the selected TOP node info
-		/// </summary>
 		private void DrawSelectedTOPNode()
 		{
 			HEU_TOPNetworkData topNetworkData = _assetLink.GetSelectedTOPNetwork();
@@ -263,6 +216,8 @@ namespace HoudiniEngineUnity
 
 			using(new EditorGUILayout.VerticalScope(_backgroundStyle))
 			{
+				//HEU_EditorUI.DrawHeadingLabel("Internal TOP Nodes");
+
 				int numTopNodes = topNetworkData._topNodeNames.Length;
 				if (numTopNodes > 0)
 				{
@@ -276,6 +231,8 @@ namespace HoudiniEngineUnity
 						{
 							_assetLink.SelectTOPNode(topNetworkData, newSelectedIndex);
 						}
+
+						//EditorGUILayout.Space();
 					}
 				}
 				else
@@ -302,6 +259,8 @@ namespace HoudiniEngineUnity
 
 					using (new EditorGUILayout.HorizontalScope())
 					{
+						//GUILayout.Space(15);
+
 						if (GUILayout.Button(_buttonDirtyContent))
 						{
 							_assetLink.DirtyTOPNode(topNode);
@@ -311,6 +270,8 @@ namespace HoudiniEngineUnity
 						{
 							_assetLink.CookTOPNode(topNode);
 						}
+
+						//GUILayout.Space(15);
 					}
 
 					EditorGUILayout.Space();
@@ -328,9 +289,6 @@ namespace HoudiniEngineUnity
 			}
 		}
 
-		/// <summary>
-		/// Displays global PDG status
-		/// </summary>
 		private void DrawPDGStatus()
 		{
 			string pdgState = "PDG is NOT READY";
@@ -343,6 +301,11 @@ namespace HoudiniEngineUnity
 				{
 					pdgState = "PDG is COOKING";
 					stateColor = Color.yellow;
+
+					//if (_assetLink != null)
+					{
+						//pdgState = string.Format("{0} ({1})", pdgState, _assetLink._workItemTally.ProgressRatio());
+					}
 				}
 				else if (pdgSession._pdgState == HAPI_PDG_State.HAPI_PDG_STATE_READY)
 				{
@@ -357,10 +320,6 @@ namespace HoudiniEngineUnity
 			GUILayout.Box(pdgState, _boxStyleStatus);
 		}
 
-		/// <summary>
-		/// Displays the given work item tally
-		/// </summary>
-		/// <param name="tally"></param>
 		private void DrawWorkItemTally(HEU_WorkItemTally tally)
 		{
 			float totalWidth = EditorGUIUtility.currentViewWidth;
@@ -441,7 +400,7 @@ namespace HoudiniEngineUnity
 			_buttonDirtyContent = new GUIContent("Dirty Node", "Remove current TOP node's work items.");
 			_buttonCookContent = new GUIContent("Cook Node", "Generates and cooks current TOP node's work items.");
 
-			_autoloadContent = new GUIContent("Autoload Results", "Automatically load into Unity the generated geometry from work item results.");
+			_autoloadContent = new GUIContent("Autoload Results", "Automatically load into Unity the generated geometry from work item resultsl.");
 			_showHideResultsContent = new GUIContent("Show Results", "Show or Hide Results.");
 
 			_buttonDirtyAllContent = new GUIContent("Dirty All", "Removes all work items.");
@@ -449,8 +408,6 @@ namespace HoudiniEngineUnity
 
 			_buttonCancelCookContent = new GUIContent("Cancel Cook", "Cancel PDG cook.");
 			_buttonPauseCookContent = new GUIContent("Pause Cook", "Pause PDG cook.");
-
-			_eventMessageContent = new GUIContent("PDG Event Messages", "Messages from events generated during cooking the PDG graph.");
 
 			_backgroundStyle = new GUIStyle(GUI.skin.box);
 			RectOffset br = _backgroundStyle.margin;
@@ -490,10 +447,6 @@ namespace HoudiniEngineUnity
 			_boxStyleStatus.alignment = TextAnchor.MiddleCenter;
 			_boxStyleStatus.fontSize = 14;
 			_boxStyleStatus.stretchWidth = true;
-
-			_eventMessageStyle = new GUIStyle(EditorStyles.textArea);
-			_eventMessageStyle.richText = true;
-			_eventMessageStyle.normal.background = HEU_GeneralUtility.MakeTexture(1, 1, new Color(0, 0, 0, 1f));
 		}
 
 		public void RefreshUI()
@@ -505,48 +458,6 @@ namespace HoudiniEngineUnity
 
 			Repaint();
 		}
-
-		//	MENU ----------------------------------------------------------------------------------------------------
-		/// <summary>
-		/// Menu entry to create the PDG Asset Link object with link to selected HDA.
-		/// </summary>
-#if UNITY_EDITOR
-		[MenuItem(HEU_Defines.HEU_PRODUCT_NAME + "/PDG/Create PDG Asset Link", false, 100)]
-		public static void CreatePDGAssetLink()
-		{
-			GameObject selectedGO = Selection.activeGameObject;
-			if (selectedGO != null)
-			{
-				HEU_HoudiniAssetRoot assetRoot = selectedGO.GetComponent<HEU_HoudiniAssetRoot>();
-				if (assetRoot != null)
-				{
-					if (assetRoot._houdiniAsset != null)
-					{
-						string name = string.Format("{0}_PDGLink", assetRoot._houdiniAsset.AssetName);
-
-						GameObject go = new GameObject(name);
-						HEU_PDGAssetLink assetLink = go.AddComponent<HEU_PDGAssetLink>();
-						assetLink.Setup(assetRoot._houdiniAsset);
-
-						Selection.activeGameObject = go;
-					}
-					else
-					{
-						Debug.LogError("Selected gameobject is not an instantiated HDA. Failed to create PDG Asset Link.");
-					}
-				}
-				else
-				{
-					Debug.LogError("Selected gameobject is not an instantiated HDA. Failed to create PDG Asset Link.");
-				}
-			}
-			else
-			{
-				//Debug.LogError("Nothing selected. Select an instantiated HDA first.");
-				HEU_EditorUtility.DisplayErrorDialog("PDG Asset Link", "No HDA selected. You must select an instantiated HDA first.", "OK");
-			}
-		}
-#endif
 
 		//	DATA ------------------------------------------------------------------------------------------------------
 
@@ -583,10 +494,6 @@ namespace HoudiniEngineUnity
 		private GUIStyle _boxStyleTitle;
 		private GUIStyle _boxStyleValue;
 		private GUIStyle _boxStyleStatus;
-
-		private GUIContent _eventMessageContent;
-		private GUIStyle _eventMessageStyle;
-		private Vector2 _eventMessageScrollPos = new Vector2();
 
 		private Texture2D _boxTitleTexture;
 

@@ -568,20 +568,6 @@ namespace HoudiniEngineUnity
 			}
 		}
 
-		public static string DefaultTerrainMaterial
-		{
-			get
-			{
-				string path = "";
-				HEU_PluginStorage.Instance.Get("HAPI_DefaultTerrainMaterial", out path, path);
-				return path;
-			}
-			set
-			{
-				HEU_PluginStorage.Instance.Set("HAPI_DefaultTerrainMaterial", value);
-			}
-		}
-
 		public static string TerrainSplatTextureDefault
 		{
 			get
@@ -748,76 +734,6 @@ namespace HoudiniEngineUnity
 			set
 			{
 				HEU_PluginStorage.Instance.Set("HAPI_LastExportPath", value);
-			}
-		}
-
-		public static int InputSelectionFilterLocation
-		{
-			get
-			{
-				int selection = 1;
-				HEU_PluginStorage.Instance.Get("HAPI_InputFilterLocation", out selection, selection);
-				return selection;
-			}
-			set
-			{
-				HEU_PluginStorage.Instance.Set("HAPI_InputFilterLocation", value);
-			}
-		}
-
-		public static int InputSelectionFilterState
-		{
-			get
-			{
-				int selection = 1;
-				HEU_PluginStorage.Instance.Get("HAPI_InputFilterState", out selection, selection);
-				return selection;
-			}
-			set
-			{
-				HEU_PluginStorage.Instance.Set("HAPI_InputFilterState", value);
-			}
-		}
-
-		public static bool InputSelectionFilterRoots
-		{
-			get
-			{
-				bool selection = false;
-				HEU_PluginStorage.Instance.Get("HAPI_InputFilterRoots", out selection, selection);
-				return selection;
-			}
-			set
-			{
-				HEU_PluginStorage.Instance.Set("HAPI_InputFilterRoots", value);
-			}
-		}
-
-		public static string InputSelectionFilterName
-		{
-			get
-			{
-				string selection = "";
-				HEU_PluginStorage.Instance.Get("HAPI_InputFilterName", out selection, selection);
-				return selection;
-			}
-			set
-			{
-				HEU_PluginStorage.Instance.Set("HAPI_InputFilterName", value);
-			}
-		}
-
-		public static bool CookOptionSplitGeosByGroup
-		{
-			get
-			{
-				bool selection = false;
-				HEU_PluginStorage.Instance.Get("HAPI_CookOptionSplitGeosByGroup", out selection, selection);
-				return selection;
-			}
-			set
-			{
-				HEU_PluginStorage.Instance.Set("HAPI_CookOptionSplitGeosByGroup", value);
 			}
 		}
 	}
