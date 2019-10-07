@@ -178,6 +178,7 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
             yield return new WaitForSeconds(.1f);
         }
         thisAudio.Stop();
+        thisAudio.volume = 1;
         thisAudio.clip = intenseMusic;
         thisAudio.Play();
         audioTransitioning = false;
@@ -194,6 +195,7 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
             yield return new WaitForSeconds(.1f);
         }
         thisAudio.Stop();
+        thisAudio.volume = 1;
         thisAudio.clip = music;
         thisAudio.Play();
         audioTransitioning = false;

@@ -63,7 +63,8 @@ public class CarGameUi : MonoBehaviour
 			if (winner)
 			{
 				leaderboardAnchor.SetActive(false);
-				winnerText.gameObject.SetActive(true);
+                endGameText.gameObject.SetActive(false);
+                winnerText.gameObject.SetActive(true);
 				winnerText.text = winner.photonView.Owner.NickName + " Has Served the Monolith!\nEveryone else is a disappointment!";
 				break;
 			}
