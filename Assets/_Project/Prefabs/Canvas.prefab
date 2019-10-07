@@ -732,6 +732,11 @@ PrefabInstance:
       propertyPath: m_Padding.m_Right
       value: 7
       objectReference: {fileID: 0}
+    - target: {fileID: 6912852484412843737, guid: 31f0fd5694959475a909c40c2f676c16,
+        type: 3}
+      propertyPath: m_Padding.m_Top
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 6829823976028766572, guid: 31f0fd5694959475a909c40c2f676c16,
         type: 3}
       propertyPath: m_FontData.m_Font
