@@ -90,7 +90,9 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 
     void Awake()
     {
+        Instance = this;
         junkParent = GameObject.Find("JunkParent");
+        thisAudio = GetComponent<AudioSource>();
     }
 
 	/// <summary>
@@ -98,9 +100,9 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 	/// </summary>
 	void Start()
 	{
-		thisAudio = GetComponent<AudioSource>();
+		
 
-        Instance = this;
+        
 
 		// in case we started this demo with the wrong scene being active, simply load the menu scene
 		if (!PhotonNetwork.IsConnected)
