@@ -21,9 +21,12 @@ using Photon.Realtime;
 /// </summary>
 public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 {
-	#region Public Fields
 
-	[Tooltip("The current Health of our player")]
+    private static float JUNK_SPAWN_EJECT_HEIGHT_OFFSET = 7;
+
+    #region Public Fields
+
+    [Tooltip("The current Health of our player")]
 	public float Health = 1f;
 
 	[Tooltip("The local player instance. Use this to know if the local player is represented in the Scene")]
@@ -204,13 +207,29 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 
 		// We are only interested in Beamers
 		// we should be using tags but for the sake of distribution, let's simply check by name.
-		if (!other.name.Contains("Beam"))
+		if (other.name.Contains("Laser"))
 		{
-			return;
-		}
-
-		this.Health -= 0.1f;
+            if (Junk > 0)
+            {
+                this.Junk--;
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    PhotonNetwork.InstantiateSceneObject("Junk", new Vector3(transform.position.x, transform.position.y + JUNK_SPAWN_EJECT_HEIGHT_OFFSET, transform.position.z), Quaternion.identity, 0);
+                }
+                else
+                {
+                    photonView.RPC("SpawnJunk", RpcTarget.MasterClient);
+                }
+            }  
+            this.Health -= 0.1f;
+        }
 	}
+
+    [PunRPC]
+    public void SpawnJunk()
+    {
+        PhotonNetwork.InstantiateSceneObject("Junk", new Vector3(transform.position.x, transform.position.y + JUNK_SPAWN_EJECT_HEIGHT_OFFSET, transform.position.z), Quaternion.identity, 0);
+    }
 
 	/// <summary>
 	/// MonoBehaviour method called once per frame for every Collider 'other' that is touching the trigger.
