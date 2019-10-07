@@ -12,8 +12,10 @@ public class CarGameUi : MonoBehaviour
 	[SerializeField] Text winnerText;
     [SerializeField] Text endGameText;
     [SerializeField] Text instructionText;
+    
+    PlayerManagerCarPhoton thisIsMe;
 
-	List<LeaderboardEntryUi> leaderboardEntries = new List<LeaderboardEntryUi>();
+    List<LeaderboardEntryUi> leaderboardEntries = new List<LeaderboardEntryUi>();
 	List<PlayerManagerCarPhoton> cars = new List<PlayerManagerCarPhoton>();
 
 	private void Awake()
@@ -66,6 +68,12 @@ public class CarGameUi : MonoBehaviour
                 endGameText.gameObject.SetActive(false);
                 winnerText.gameObject.SetActive(true);
 				winnerText.text = winner.photonView.Owner.NickName + " Has Served the Monolith!\nEveryone else is a disappointment!";
+                thisIsMe = GameManagerMM.Instance.ThisIsMe.GetComponent<PlayerManagerCarPhoton>();
+                if (winner = thisIsMe) {
+                    GameManagerMM.Instance.StartTheWin();
+                } else {
+                    GameManagerMM.Instance.StarTheLose();
+                }
 				break;
 			}
 			else
