@@ -277,7 +277,8 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
                     if (Physics.Raycast(ray, out hit, 2000.0f, LayerMask.GetMask(new string[1] { "Terrain" })))
                     {
                         //Debug.Log("Spawning");
-                        GameObject go = PhotonNetwork.InstantiateSceneObject("Junk", new Vector3(hit.point.x, hit.point.y + 1, hit.point.z), Quaternion.identity, 0);
+                        // GameObject go = PhotonNetwork.InstantiateSceneObject("Junk", new Vector3(hit.point.x, hit.point.y + 1, hit.point.z), Quaternion.identity, 0);
+                        GameObject go = PhotonNetwork.InstantiateSceneObject("Junk", new Vector3(hit.point.x, hit.point.y + 1, hit.point.z), Random.rotation, 0); //rand rot
                         if (junkParent != null)
                         {
                             go.transform.SetParent(junkParent.transform);
