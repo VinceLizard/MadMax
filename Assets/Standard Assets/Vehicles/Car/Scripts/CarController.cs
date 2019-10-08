@@ -18,6 +18,8 @@ namespace UnityStandardAssets.Vehicles.Car
 
     public class CarController : MonoBehaviour
     {
+        public float currentSpeed;
+
         [SerializeField] private CarDriveType m_CarDriveType = CarDriveType.FourWheelDrive;
         [SerializeField] private WheelCollider[] m_WheelColliders = new WheelCollider[4];
         [SerializeField] private GameObject[] m_WheelMeshes = new GameObject[4];
@@ -26,8 +28,8 @@ namespace UnityStandardAssets.Vehicles.Car
         [SerializeField] private float m_MaximumSteerAngle;
         [Range(0, 1)] [SerializeField] private float m_SteerHelper; // 0 is raw physics , 1 the car will grip in the direction it is facing
         [Range(0, 1)] [SerializeField] private float m_TractionControl; // 0 is no traction control, 1 is full interference
-        [SerializeField] private float m_FullTorqueOverAllWheels;
-        [SerializeField] private float m_ReverseTorque;
+        public float m_FullTorqueOverAllWheels;
+        public float m_ReverseTorque;
         [SerializeField] private float m_MaxHandbrakeTorque;
         [SerializeField] private float m_Downforce = 100f;
         [SerializeField] private SpeedType m_SpeedType;
@@ -35,7 +37,7 @@ namespace UnityStandardAssets.Vehicles.Car
         [SerializeField] private static int NoOfGears = 5;
         [SerializeField] private float m_RevRangeBoundary = 1f;
         [SerializeField] private float m_SlipLimit;
-        [SerializeField] private float m_BrakeTorque;
+        public float m_BrakeTorque;
 
         private Quaternion[] m_WheelMeshLocalRotations;
         private Vector3 m_Prevpos, m_Pos;
@@ -51,7 +53,7 @@ namespace UnityStandardAssets.Vehicles.Car
         public float BrakeInput { get; private set; }
         public float CurrentSteerAngle{ get { return m_SteerAngle; }}
         public float CurrentSpeed{ get { return m_Rigidbody.velocity.magnitude * 2.23693629f; } }
-        public float MaxSpeed{ get { return m_Topspeed; } }
+        public float MaxSpeed{ get { return m_Topspeed; } set { m_Topspeed = value; } }
         public float Revs { get; private set; }
         public float AccelInput { get; private set; }
 
@@ -76,7 +78,10 @@ namespace UnityStandardAssets.Vehicles.Car
             m_CurrentTorque = m_FullTorqueOverAllWheels - (m_TractionControl*m_FullTorqueOverAllWheels);
         }
 
-
+        private void Update()
+        {
+            currentSpeed = m_Rigidbody.velocity.magnitude * 2.23693629f;
+        }
         private void GearChanging()
         {
             float f = Mathf.Abs(CurrentSpeed/MaxSpeed);
@@ -177,7 +182,7 @@ namespace UnityStandardAssets.Vehicles.Car
         }
 
 
-        private void CapSpeed()
+        public void CapSpeed()
         {
             float speed = m_Rigidbody.velocity.magnitude;
             switch (m_SpeedType)

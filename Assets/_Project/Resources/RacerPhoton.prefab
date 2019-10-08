@@ -6043,7 +6043,7 @@ Rigidbody:
   serializedVersion: 2
   m_Mass: 1000
   m_Drag: 0.01
-  m_AngularDrag: 1
+  m_AngularDrag: 5
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
@@ -6061,6 +6061,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ea65b38d485c374caa584a03f1de571, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  currentSpeed: 0
   m_CarDriveType: 2
   m_WheelColliders:
   - {fileID: 347166586754462438}
@@ -6078,18 +6079,18 @@ MonoBehaviour:
   - {fileID: 347166586749142768}
   - {fileID: 347166586749142766}
   m_CentreOfMassOffset: {x: 0, y: 0, z: 0}
-  m_MaximumSteerAngle: 25
+  m_MaximumSteerAngle: 45
   m_SteerHelper: 0.801
   m_TractionControl: 0.53
-  m_FullTorqueOverAllWheels: 10000
-  m_ReverseTorque: 4000
+  m_FullTorqueOverAllWheels: 1000000
+  m_ReverseTorque: 400000
   m_MaxHandbrakeTorque: 100000000
   m_Downforce: 300
   m_SpeedType: 0
-  m_Topspeed: 150
+  m_Topspeed: 75
   m_RevRangeBoundary: 1
-  m_SlipLimit: 0.15
-  m_BrakeTorque: 200000
+  m_SlipLimit: 0.6
+  m_BrakeTorque: 400000
 --- !u!114 &347166586749142776
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6202,6 +6203,7 @@ MonoBehaviour:
   playerUiPrefab: {fileID: 170056, guid: 0d43061c6efb81b47917603c5d68a5df, type: 3}
   lasers: {fileID: 9113481786285790645}
   boostPower: 100000
+  boostDuration: 10
   boostCoolDownTime: 10
 --- !u!114 &8475166846663411191
 MonoBehaviour:

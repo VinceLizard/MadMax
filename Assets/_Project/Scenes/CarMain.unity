@@ -1417,6 +1417,7 @@ MonoBehaviour:
   _requiresCook: 1
   _requiresUpload: 0
   _inputName: Terrain
+  _labelName: 
   _paramName: terrainPath
   _connectedNodeID: 18
   _keepWorldTransform: 1
@@ -56489,11 +56490,11 @@ MonoBehaviour:
   - {fileID: 4378128186008740785, guid: a7fd99d5153110d44b4b4e0eaeec0c4d, type: 3}
   - {fileID: 3623186261363463562, guid: 51b2b5865fa5cd446a179e26963004b1, type: 3}
   - {fileID: 5524615142383949454, guid: 728b5a29a1007b14a814d4c7985c31db, type: 3}
+  - {fileID: 112365579521640533, guid: cda41e3fb99336147b23c67b4d5eac49, type: 3}
   - {fileID: 4852839639711234919, guid: bca99b2424f807740843fff6300a53cf, type: 3}
   - {fileID: 9082879929177745531, guid: d0fe7d9cdcecb2c47979bb57e0421eeb, type: 3}
-  - {fileID: 2476682132531755445, guid: c3ee92e43ffc13246a3a81080b978b07, type: 3}
   - {fileID: 2417606081344660372, guid: f8384004c9ea92549be42f8c9855b226, type: 3}
-  - {fileID: 112365579521640533, guid: cda41e3fb99336147b23c67b4d5eac49, type: 3}
+  - {fileID: 2476682132531755445, guid: c3ee92e43ffc13246a3a81080b978b07, type: 3}
   music: {fileID: 8300000, guid: 808cc3e748e6e43e381a2133b8475bb8, type: 3}
   intenseMusic: {fileID: 8300000, guid: 74eb581d859a84d8d84ffe92ee22504d, type: 3}
   loseMusic: {fileID: 8300000, guid: c1fa7b2f2ac0d41f1a4fb1565cdc8229, type: 3}
@@ -95898,12 +95899,12 @@ MonoBehaviour:
   _checkParameterChangeForCook: 0
   _skipCookCheck: 0
   _uploadParameters: 1
+  _forceUploadInputs: 0
   _cookStatus: 0
   _lastCookResult: 1
   _isCookingAssetReloaded: 0
   _sessionID: 1792717187104
   _uiLocked: 1
-  _showInstanceInputs: 1
   _showHDAOptions: 0
   _showGenerateSection: 1
   _showBakeSection: 1
@@ -95912,6 +95913,7 @@ MonoBehaviour:
   _showInputNodesSection: 0
   _showToolsSection: 0
   _showTerrainSection: 0
+  _instanceInputUIState: {fileID: 0}
   _reloadEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -95934,6 +95936,7 @@ MonoBehaviour:
   _ignoreNonDisplayNodes: 0
   _generateMeshUsingPoints: 0
   _useLODGroups: 1
+  _splitGeosByGroup: 0
   _curveEditorEnabled: 1
   _curves: []
   _curveDrawCollision: 0

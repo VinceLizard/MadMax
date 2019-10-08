@@ -24,9 +24,10 @@ using UnityStandardAssets.Vehicles.Car;
 public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 {
 
-    private static float JUNK_SPAWN_EJECT_HEIGHT_OFFSET = 7;
-    private static int JUNK_EJECT_COOLDOWN = 5;
-    private static int AMOUNT_OF_JUNK_TO_EJECT = 10;
+    private const float JUNK_SPAWN_EJECT_HEIGHT_OFFSET = 7;
+    private const int JUNK_EJECT_COOLDOWN = 5;
+    private const int AMOUNT_OF_JUNK_TO_EJECT = 10;
+    private const float boostSpeedAdjustment = 75;
 
     #region Public Fields
 
@@ -60,6 +61,9 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
 
     [SerializeField]
     private float boostPower = 100;
+
+    [SerializeField]
+    private float boostDuration = 10;
 
     [SerializeField]
     private float boostCoolDownTime = 10;
@@ -373,49 +377,54 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
             Debug.Log("BOOST");
             if (BoostCooled)
             {
-                BoostCooled = false;
-                rb.AddForce(transform.forward * boostPower, ForceMode.Impulse);
-                Invoke("BoostCooler", boostCoolDownTime);
-                StartCoroutine(BoostBar());
+                
+
+                
+
+                StartCoroutine(Boosting());
+
+                
             }
         }
-
-        /*
-            if (Input.GetButtonDown("Fire1"))
-            {
-                // we don't want to fire when we interact with UI buttons for example. IsPointerOverGameObject really means IsPointerOver*UI*GameObject
-                // notice we don't use on on GetbuttonUp() few lines down, because one can mouse down, move over a UI element and release, which would lead to not lower the isFiring Flag.
-                if (EventSystem.current.IsPointerOverGameObject())
-                {
-                    //return;
-                }
-
-                if (!this.IsFiring)
-                {
-                    this.IsFiring = true;
-                }
-            }
-
-
-            if (Input.GetButtonUp("Fire1"))
-            {
-                if (this.IsFiring)
-                {
-                    this.IsFiring = false;
-                }
-            }
-            */
     }
 
-    void BoostCooler()
+    IEnumerator Boosting()
     {
+        BoostCooled = false;
+        // give an initial thrust forward
+        rb.AddForce(transform.forward * boostPower, ForceMode.Impulse);
+        cc.MaxSpeed += boostSpeedAdjustment;
+        BoostAdjuster(2);
+        var t = 0f;
+        var startPos = 256f;
+        float endPos = 61.4f;
+        while (t <= boostCoolDownTime)
+        {
+            t += .1f;
+            var currentpos = Mathf.Lerp(startPos, endPos, t / boostCoolDownTime);
+            rt.anchoredPosition = new Vector3(currentpos, 0, 0);
+            yield return new WaitForSeconds(.1f);
+        }
+        //reset car to normal
+        cc.MaxSpeed -= boostSpeedAdjustment;
+        BoostAdjuster(.5f);
+        yield return new WaitForSeconds(boostCoolDownTime);
+        //turn on Boost bar again
+        rt.anchoredPosition = new Vector3(startPos, 0, 0); 
         BoostCooled = true;
+    }
+
+    void BoostAdjuster(float x)
+    { 
+        cc.m_FullTorqueOverAllWheels *= x;
+        cc.m_ReverseTorque *= x;
+        cc.m_BrakeTorque *= x;
     }
 
     IEnumerator BoostBar() {
         var t = 0f;
-        var startPos = 61.4f;
-        float endPos = 256f;
+        var startPos = 256f;
+        float endPos = 61.4f;
         while (t <= boostCoolDownTime) {
             t +=.1f;
             var currentpos = Mathf.Lerp(startPos, endPos, t/boostCoolDownTime);
