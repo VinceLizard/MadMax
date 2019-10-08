@@ -80,6 +80,9 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
     //use this when changin Boost status in UI
     public bool BoostCooled { get; set; } = true;
 
+    // used to adjust audio
+    public bool BoostingOn { get; set; } = false;
+
     RectTransform rt;
 
     #endregion
@@ -377,13 +380,7 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
             Debug.Log("BOOST");
             if (BoostCooled)
             {
-                
-
-                
-
-                StartCoroutine(Boosting());
-
-                
+                StartCoroutine(Boosting());   
             }
         }
     }
@@ -391,10 +388,16 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
     IEnumerator Boosting()
     {
         BoostCooled = false;
+        BoostingOn = true;
+        carAudio.boostMultiplier = (cc.MaxSpeed + boostSpeedAdjustment) / cc.MaxSpeed;
         // give an initial thrust forward
         rb.AddForce(transform.forward * boostPower, ForceMode.Impulse);
+
+        // boost implementation
         cc.MaxSpeed += boostSpeedAdjustment;
         BoostAdjuster(2);
+
+        //Boost meter going down
         var t = 0f;
         var startPos = 256f;
         float endPos = 61.4f;
@@ -405,11 +408,15 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
             rt.anchoredPosition = new Vector3(currentpos, 0, 0);
             yield return new WaitForSeconds(.1f);
         }
-        //reset car to normal
+
+        //reset car to normal and cooldown
         cc.MaxSpeed -= boostSpeedAdjustment;
         BoostAdjuster(.5f);
+        BoostingOn = false;
+        carAudio.boostMultiplier = 1;
         yield return new WaitForSeconds(boostCoolDownTime);
-        //turn on Boost bar again
+
+        //turn on Boost again
         rt.anchoredPosition = new Vector3(startPos, 0, 0); 
         BoostCooled = true;
     }
@@ -419,18 +426,6 @@ public class PlayerManagerCarPhoton : MonoBehaviourPunCallbacks, IPunObservable
         cc.m_FullTorqueOverAllWheels *= x;
         cc.m_ReverseTorque *= x;
         cc.m_BrakeTorque *= x;
-    }
-
-    IEnumerator BoostBar() {
-        var t = 0f;
-        var startPos = 256f;
-        float endPos = 61.4f;
-        while (t <= boostCoolDownTime) {
-            t +=.1f;
-            var currentpos = Mathf.Lerp(startPos, endPos, t/boostCoolDownTime);
-            rt.anchoredPosition = new Vector3(currentpos, 0, 0);
-            yield return new WaitForSeconds(.1f);
-        }
     }
 
 	#endregion

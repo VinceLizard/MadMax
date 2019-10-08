@@ -62,6 +62,7 @@ namespace UnityStandardAssets.Vehicles.Car
         private CarController m_CarController; // Reference to car we are controlling
         float currentSpeed;
         float newCurrentSpeed;
+        public float boostMultiplier = 1;
 
         private void Awake()
         {
@@ -204,10 +205,10 @@ namespace UnityStandardAssets.Vehicles.Car
                     }
                 }
                 // The pitch is interpolated between the min and max values, according to the car's revs.
-                float pitch = ULerp(lowPitchMin, lowPitchMax, m_CarController.Revs);
+                float pitch = ULerp(lowPitchMin, lowPitchMax * boostMultiplier, m_CarController.Revs);
 
                 // clamp to minimum pitch (note, not clamped to max for high revs while burning out)
-                pitch = Mathf.Min(lowPitchMax, pitch);
+                pitch = Mathf.Min(lowPitchMax * boostMultiplier, pitch);
 
                 if (engineSoundStyle == EngineAudioOptions.Simple)
                 {
