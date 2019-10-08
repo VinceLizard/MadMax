@@ -79,10 +79,10 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
 
     // Set these in Inspector
     public int RequiredToDepot = 50;
-	public float JunkSpawnRadius = 50f;
-	public int MaxNumberOfJunkSpawns = 5000;
-    public int MaxNumToSpawnPerJunkGroup = 50;
-    public float CooldownBeforeNextJunkSpawn = 3.0f;
+	public float JunkSpawnRadius = 5000f;
+	public int MaxNumberOfJunkSpawns = 1;
+    public int MaxNumToSpawnPerJunkGroup = 1;
+    public float CooldownBeforeNextJunkSpawn = 1000000.0f;
 
     #endregion
 
@@ -266,7 +266,8 @@ public class GameManagerMM : MonoBehaviourPunCallbacks
             {
 
                 int numberspawed = GameObject.FindGameObjectsWithTag("Junk").Length;
-                amountToSpawn = Mathf.Min(MaxNumToSpawnPerJunkGroup, (MaxNumberOfJunkSpawns - numberspawed));
+                // amountToSpawn = Mathf.Min(MaxNumToSpawnPerJunkGroup, (MaxNumberOfJunkSpawns - numberspawed));
+                amountToSpawn = 5; //hard coded amount because MaxNumToSpawnPerJunkGroup was not giving accurate result -nt
                 //Debug.Log("Starting to spawn a group of" + amountToSpawn + " junk.");
                 while (amountToSpawn > 0)
                 {
