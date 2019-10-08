@@ -135,7 +135,7 @@ namespace Photon.Pun.Demo.PunBasics
             }
 
             // add new messages as a new line and at the bottom of the log.
-            feedbackText.text += System.Environment.NewLine + message;
+            feedbackText.text = message;
         }
 
         #endregion
@@ -156,7 +156,7 @@ namespace Photon.Pun.Demo.PunBasics
             // we don't want to do anything.
             if (isConnecting)
             {
-                LogFeedback("OnConnectedToMaster: Next -> try to Join Random Room");
+                //LogFeedback("OnConnectedToMaster: Next -> try to Join Random Room");
                 Debug.Log("PUN Basics Tutorial/Launcher: OnConnectedToMaster() was called by PUN. Now this client is connected and could join a room.\n Calling: PhotonNetwork.JoinRandomRoom(); Operation will fail if no room found");
 
                 // #Critical: The first we try to do is to join a potential existing room. If there is, good, else, we'll be called back with OnJoinRandomFailed()
@@ -172,7 +172,7 @@ namespace Photon.Pun.Demo.PunBasics
         /// </remarks>
         public override void OnJoinRandomFailed(short returnCode, string message)
         {
-            LogFeedback("<Color=Red>OnJoinRandomFailed</Color>: Next -> Create a new Room");
+            //LogFeedback("<Color=Red>OnJoinRandomFailed</Color>: Next -> Create a new Room");
             Debug.Log("PUN Basics Tutorial/Launcher:OnJoinRandomFailed() was called by PUN. No random room available, so we create one.\nCalling: PhotonNetwork.CreateRoom");
 
             // #Critical: we failed to join a random room, maybe none exists or they are all full. No worries, we create a new room.
@@ -185,7 +185,7 @@ namespace Photon.Pun.Demo.PunBasics
         /// </summary>
         public override void OnDisconnected(DisconnectCause cause)
         {
-            LogFeedback("<Color=Red>OnDisconnected</Color> " + cause);
+            LogFeedback("<Color=Red>Unable to connect.</Color> Check internet connection & try again.");
             Debug.LogError("PUN Basics Tutorial/Launcher:Disconnected");
 
             // #Critical: we failed to connect or got disconnected. There is not much we can do. Typically, a UI system should be in place to let the user attemp to connect again.
@@ -209,7 +209,7 @@ namespace Photon.Pun.Demo.PunBasics
         /// </remarks>
         public override void OnJoinedRoom()
         {
-            LogFeedback("<Color=Green>OnJoinedRoom</Color> with " + PhotonNetwork.CurrentRoom.PlayerCount + " Player(s)");
+            //LogFeedback("<Color=Green>OnJoinedRoom</Color> with " + PhotonNetwork.CurrentRoom.PlayerCount + " Player(s)");
             Debug.Log("PUN Basics Tutorial/Launcher: OnJoinedRoom() called by PUN. Now this client is in a room.\nFrom here on, your game would be running.");
 
             // #Critical: We only load if we are the first player, else we rely on  PhotonNetwork.AutomaticallySyncScene to sync our instance scene.
